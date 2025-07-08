@@ -1,0 +1,26 @@
+  //good 4 waypoint comparison perlin
+  // std::vector<Eigen::Vector3d> wps;
+  // wps.push_back(Eigen::Vector3d(4.03466,-2.53519,0.5));
+  // wps.push_back(Eigen::Vector3d(1.39032,0.639309,1.03726));
+  // wps.push_back(Eigen::Vector3d(1.40617,4.28565,1.13596));
+  // wps.push_back(Eigen::Vector3d(3.27598,8.5766,0.5)); 
+
+  //good 6 waypoint comparison perlin
+  // std::vector<Eigen::Vector3d> wps;
+  // wps.push_back(Eigen::Vector3d(10.6942,-6.52292,0.5));
+  // wps.push_back(Eigen::Vector3d(8.34109,-5.40671,2.52597));
+  // wps.push_back(Eigen::Vector3d(3.30743,2.04095,4.49087));
+  // wps.push_back(Eigen::Vector3d(-1.94216,10.1368,1.9583));
+  // wps.push_back(Eigen::Vector3d(-3.18583,14.1261,1.01875));
+  // wps.push_back(Eigen::Vector3d(-1.88054,15.5835,0.5));
+
+  // good 8 waypoint comparison perlin
+  // std::vector<Eigen::Vector3d> wps;
+  // wps.push_back(Eigen::Vector3d(18.2908,-12.9164,0.5));
+  // wps.push_back(Eigen::Vector3d(16.0048,-6.01777,0.746351));
+  // wps.push_back(Eigen::Vector3d(9.74278,-4.28989,3.58934));
+  // wps.push_back(Eigen::Vector3d(2.32316,-1.06404,1.57101));
+  // wps.push_back(Eigen::Vector3d(-2.50561,5.7747,1.74195));
+  // wps.push_back(Eigen::Vector3d(-5.96077,10.9205,1.32572));
+  // wps.push_back(Eigen::Vector3d(-16.5275,15.9659,1.26184));
+  // wps.push_back(Eigen::Vector3d(-19.8453,12.2357,0.5));
