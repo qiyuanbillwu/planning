@@ -65,7 +65,7 @@ def Q(T):
 
 # New cost matrix for 5th order (min-jerk) polynomial
 # This is for minimum jerk trajectory generation, integrating the square of the 3rd derivative (jerk)
-def Q5(T):
+def Q_jerk(T):
     """
     Returns the cost matrix for minimum jerk (5th order) trajectory generation.
     Integrates the square of the 3rd derivative (jerk) over [0, T].
