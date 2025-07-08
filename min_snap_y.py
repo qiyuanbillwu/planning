@@ -7,9 +7,6 @@ import json
 # Option to save coefficients to file
 save_coeffs_to_file = True  # Set to False to skip saving
 
-# Threshold for small coefficients
-threshold = 1e-10
-
 # Define the boundary conditions for Y direction
 # initial position, velocity, acceleration, jerk
 y0 = 1
@@ -106,10 +103,6 @@ if print_py:
 # Extract coefficients for each polynomial
 p1_coeffs = py[:8].flatten()  # First 8 coefficients for polynomial 1
 p2_coeffs = py[8:].flatten()  # Last 8 coefficients for polynomial 2
-
-# Set very small coefficients to zero
-p1_coeffs = np.where(np.abs(p1_coeffs) < threshold, 0, p1_coeffs)
-p2_coeffs = np.where(np.abs(p2_coeffs) < threshold, 0, p2_coeffs)
 
 if print_py:
     print("Polynomial 1 coefficients (p1_y):")
