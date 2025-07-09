@@ -1,4 +1,4 @@
-from utils import a5, Q5
+from utils import a5, Q_jerk
 import constants
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,8 +25,8 @@ def Jx(T1, T2):
 
     # construct the total Hessian matrix
     # start_time = time.time()
-    Q1 = Q5(T1)
-    Q2 = Q5(T2)
+    Q1 = Q_jerk(T1)
+    Q2 = Q_jerk(T2)
     Q_total = np.block([
         [Q1, np.zeros_like(Q1)],
         [np.zeros_like(Q2), Q2]
@@ -102,8 +102,8 @@ def Jy(T1, T2):
     v1 = 0
 
     # construct the total Hessian matrix
-    Q1 = Q5(T1)
-    Q2 = Q5(T2)
+    Q1 = Q_jerk(T1)
+    Q2 = Q_jerk(T2)
     Q_total = np.block([
         [Q1, np.zeros_like(Q1)],
         [np.zeros_like(Q2), Q2]
@@ -181,8 +181,8 @@ def Jz(T1, T2):
     a1 = -constants.g
 
     # construct the total Hessian matrix
-    Q1 = Q5(T1)
-    Q2 = Q5(T2)
+    Q1 = Q_jerk(T1)
+    Q2 = Q_jerk(T2)
     Q_total = np.block([
         [Q1, np.zeros_like(Q1)],
         [np.zeros_like(Q2), Q2]
