@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import json
+from utils import get_positions
 
 # Load the polynomial coefficients
 with open('data/polynomial_coefficients.json', 'r') as f:
@@ -14,57 +15,17 @@ with open('data/optimized_time_parameters.json', 'r') as f:
 Ts = np.array(time_params['optimized_times'])  # Duration of each segment from optimization
 total_time = np.sum(Ts)
 
-# Function to evaluate 5th order polynomial
-def evaluate_polynomial(t, coeffs):
-    """
-    Evaluate a 5th order polynomial: a0 + a1*t + a2*t^2 + a3*t^3 + a4*t^4 + a5*t^5
-    """
-    return (coeffs[0] + coeffs[1]*t + coeffs[2]*t**2 + 
-            coeffs[3]*t**3 + coeffs[4]*t**4 + coeffs[5]*t**5)
-
-# Generate time points for plotting
-t_plot = np.linspace(0, total_time, 1000)
-dt = total_time / 1000
-
-# Initialize arrays to store trajectory points
-x_traj = []
-y_traj = []
-z_traj = []
-t_traj = []
-
-# Plot each segment
+# Calculate segment times
 segment_times = np.cumsum([0] + list(Ts))  # [0, 5, 10, 15, 20, 25, 30, 35]
 
-for i in range(7):
-    segment_start = segment_times[i]
-    segment_end = segment_times[i + 1]
-    
-    # Get coefficients for this segment
-    p_coeffs = coeffs[f'p{i+1}_coeffs']
-    
-    # Generate time points for this segment
-    t_segment = np.linspace(0, Ts[i], 200)  # 200 points per segment
-    
-    # Evaluate polynomial for this segment
-    x_segment = [evaluate_polynomial(t, p_coeffs['x']) for t in t_segment]
-    y_segment = [evaluate_polynomial(t, p_coeffs['y']) for t in t_segment]
-    z_segment = [evaluate_polynomial(t, p_coeffs['z']) for t in t_segment]
-    
-    # Add to trajectory arrays
-    x_traj.extend(x_segment)
-    y_traj.extend(y_segment)
-    z_traj.extend(z_segment)
-    t_traj.extend(t_segment + segment_start)
-
-# Convert to numpy arrays
-x_traj = np.array(x_traj)
-y_traj = np.array(y_traj)
-z_traj = np.array(z_traj)
-t_traj = np.array(t_traj)
+# Use the get_positions function from utils
+t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times)
 
 # Create 3D plot
 fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111, projection='3d')
+# configure orientation
+ax.view_init(elev=17, azim=-118)  # type: ignore
 
 # Plot the trajectory
 ax.plot(x_traj, y_traj, z_traj, 'b-', linewidth=2, label='Trajectory')

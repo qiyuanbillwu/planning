@@ -466,7 +466,7 @@ def plot_optimization_history(results):
     plt.grid(True)
     
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
 def save_optimization_results(results, coefficients):
     """
