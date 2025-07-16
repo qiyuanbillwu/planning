@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from eight_waypoints import optimize_times_gradient_descent, get_coefficients, save_optimization_results, plot_optimization_history
-from utils import evaluate_velocity, plot_velocities, get_velocities
+from gradient_descent import optimize_times_gradient_descent, get_coefficients, save_optimization_results, plot_optimization_history
+from utils import evaluate_velocity, plot_velocities, get_velocities, plot_accelerations, plot_jerks, plot_snaps
 import json
+import time
 
 # Extract 8 waypoints from waypoints.txt
 r0 = np.array([18.2908, -12.9164, 0.5])
@@ -13,30 +14,11 @@ r4 = np.array([-2.50561, 5.7747, 1.74195])
 r5 = np.array([-5.96077, 10.9205, 1.32572])
 r6 = np.array([-16.5275, 15.9659, 1.26184])
 r7 = np.array([-19.8453, 12.2357, 0.5])
+waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
 
 # set average and maximum velocity/acceleration
 v_max = 5.0
 v_avg = 3.0
-
-# calculate distance between waypoints
-d1 = np.linalg.norm(r1 - r0)
-d2 = np.linalg.norm(r2 - r1)
-d3 = np.linalg.norm(r3 - r2)
-d4 = np.linalg.norm(r4 - r3)
-d5 = np.linalg.norm(r5 - r4)
-d6 = np.linalg.norm(r6 - r5)
-d7 = np.linalg.norm(r7 - r6)
-
-# calculate time for each segment basead on average velocity
-t1 = d1 / v_avg
-t2 = d2 / v_avg
-t3 = d3 / v_avg
-t4 = d4 / v_avg
-t5 = d5 / v_avg
-t6 = d6 / v_avg
-t7 = d7 / v_avg
-
-Ts_initial = np.array([t1, t2, t3, t4, t5, t6, t7])
 
 # set gradient descent parameters
 kT = 100
@@ -44,11 +26,18 @@ alpha = 10**(-4)
 ITER = 1000
 TOL = 10**(-3)
 
+# start time
+start_time = time.time()
+
+# calculate distances and times for each segment based on average velocity
+distances = [np.linalg.norm(waypoints[i+1] - waypoints[i]) for i in range(len(waypoints)-1)]
+Ts_initial = [d / v_avg for d in distances]
+
 # run gradient descent
 results = optimize_times_gradient_descent(Ts_initial, kT, alpha, max_iterations=ITER, tolerance=TOL)
 
 # Save optimized coefficients and time parameters
-print("\nSaving optimized coefficients and time parameters...")
+# print("\nSaving optimized coefficients and time parameters...")
 coefficients = get_coefficients(results['Ts_optimized'])
 save_optimization_results(results, coefficients)
 
@@ -71,6 +60,7 @@ total_time = optimized_params['total_time']
 segment_times = np.cumsum([0] + list(Ts))  
 
 fig2, ax2, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_times)
+# _, x_vel, y_vel, z_vel = get_velocities(coeffs, Ts, segment_times)
 
 # get the maximum absolute velocity in x, y, z
 max_vel = np.max(np.abs(np.array([x_vel, y_vel, z_vel])))
@@ -97,7 +87,21 @@ optimized_params['total_time'] = np.sum(Ts)
 with open('data/optimized_time_parameters.json', 'w') as f:
     json.dump(optimized_params, f)
 
+end_time = time.time()
+print(f"Time taken: {end_time - start_time} seconds")
+
 # plot the new velocity
 fig3, ax3, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_times)
+
+# # plot acceleration
+# fig4, ax4, (t_acc, x_acc, y_acc, z_acc) = plot_accelerations(coeffs, Ts, segment_times)
+
+# # plot jerk
+# fig5, ax5, (t_jerk, x_jerk, y_jerk, z_jerk) = plot_jerks(coeffs, Ts, segment_times)
+
+# # plot snap
+# fig6, ax6, (t_snap, x_snap, y_snap, z_snap) = plot_snaps(coeffs, Ts, segment_times)
+
+
 
 plt.show()

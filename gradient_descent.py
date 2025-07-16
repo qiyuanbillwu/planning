@@ -362,7 +362,7 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
     Ts_history = [Ts_initial.copy()]
     cost_history = []
     
-    print("Starting gradient descent optimization...")
+    # print("Starting gradient descent optimization...")
     
     # Start timing
     start_time_gd = time.time()
@@ -393,8 +393,8 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
         # Check convergence
         Ts_change = np.max(np.abs(Ts_new - Ts_current))
         
-        if iteration % 100 == 0:
-            print(f"Iteration {iteration}: Ts={Ts_current}, Cost={current_cost:.6f}")
+        # if iteration % 100 == 0:
+        #     print(f"Iteration {iteration}: Ts={Ts_current}, Cost={current_cost:.6f}")
         
         # Update current values
         Ts_current = Ts_new
@@ -402,25 +402,25 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
         
         # Check for convergence
         if Ts_change < tolerance:
-            print(f"Converged after {iteration} iterations")
+            # print(f"Converged after {iteration} iterations")
             break
     
     end_time_gd = time.time()
     optimization_time = end_time_gd - start_time_gd
     
     print(f"Optimization completed in {optimization_time:.2f} seconds")
-    print(f"Final Ts: {Ts_current}")
-    print(f"Final cost: {current_cost:.6f}")
+    # print(f"Final Ts: {Ts_current}")
+    # print(f"Final cost: {current_cost:.6f}")
     
     # Calculate total time and proportions
     total_time = np.sum(Ts_current)
     time_proportions = Ts_current / total_time
     
-    print(f"\nTime Optimization Results:")
-    print(f"Total time: {total_time:.2f} seconds")
-    print(f"Time proportions:")
-    for i, (T, prop) in enumerate(zip(Ts_current, time_proportions)):
-        print(f"  Segment {i+1}: {T:.2f}s ({prop:.1%})")
+    # print(f"\nTime Optimization Results:")
+    # print(f"Total time: {total_time:.2f} seconds")
+    # print(f"Time proportions:")
+    # for i, (T, prop) in enumerate(zip(Ts_current, time_proportions)):
+    #     print(f"  Segment {i+1}: {T:.2f}s ({prop:.1%})")
     
     # Return results as dictionary
     results = {
@@ -490,17 +490,31 @@ def save_optimization_results(results, coefficients):
     with open('data/optimized_time_parameters.json', 'w') as f:
         json.dump(time_data, f, indent=2)
     
-    print("Optimized parameters saved to:")
-    print("- data/polynomial_coefficients.json (coefficients)")
-    print("- data/optimized_time_parameters.json (time parameters)")
+    # print("Optimized parameters saved to:")
+    # print("- data/polynomial_coefficients.json (coefficients)")
+    # print("- data/optimized_time_parameters.json (time parameters)")
 
 # Main execution
 if __name__ == "__main__":
     # Initial guess for Ts
-    Ts_initial = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
+
+    # set average and maximum velocity/acceleration
+    v_max = 5.0
+    v_avg = 3.0
+
+    # set gradient descent parameters
     kT = 100
-    learning_rate = 10**(-4)
+    alpha = 10**(-4)
+    ITER = 1000
     TOL = 10**(-3)
+
+    # start time
+    start_time = time.time()
+
+    # calculate distances and times for each segment based on average velocity
+    distances = [np.linalg.norm(waypoints[i+1] - waypoints[i]) for i in range(len(waypoints)-1)]
+    Ts_initial = [d / v_avg for d in distances]
 
     # total_time = 20
     # # Load optimized time parameters from file
@@ -509,14 +523,14 @@ if __name__ == "__main__":
     # Ts_initial = np.array(time_data['time_proportions']) * total_time
     
     # Option to skip gradient descent
-    use_gradient_descent = True  # Set to False to skip optimization
+    use_gradient_descent = False  # Set to False to skip optimization
     
     if use_gradient_descent:
         # Run optimization
-        results = optimize_times_gradient_descent(Ts_initial, kT, learning_rate, max_iterations=1000, tolerance=TOL)
+        results = optimize_times_gradient_descent(Ts_initial, kT, alpha, max_iterations=ITER, tolerance=TOL)
         
         # Save optimized coefficients and time parameters
-        print("\nSaving optimized coefficients and time parameters...")
+        # print("\nSaving optimized coefficients and time parameters...")
         coefficients = get_coefficients(results['Ts_optimized'])
         save_optimization_results(results, coefficients)
 
@@ -530,11 +544,11 @@ if __name__ == "__main__":
         # Calculate cost for initial parameters
         initial_cost = J(Ts_initial, kT)
         total_time = np.sum(Ts_initial)
-        time_proportions = Ts_initial / total_time
+        time_proportions = np.array(Ts_initial) / total_time
         
         # Create results dictionary for consistency
         results = {
-            'Ts_optimized': Ts_initial,
+            'Ts_optimized': np.array(Ts_initial),
             'final_cost': initial_cost,
             'total_time': total_time,
             'time_proportions': time_proportions,
