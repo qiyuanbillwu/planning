@@ -19,7 +19,7 @@ total_time = np.sum(Ts)
 segment_times = np.cumsum([0] + list(Ts))  # [0, 5, 10, 15, 20, 25, 30, 35]
 
 # Use the get_positions function from utils
-t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times)
+t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, order=5)
 
 # Create 3D plot
 fig = plt.figure(figsize=(12, 8))

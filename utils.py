@@ -53,7 +53,7 @@ def beta(i):
         return 0
     return i*(i-1)*(i-2)*(i-3)
 
-def Q(T):
+def Q_snap(T):
     """
     Returns the cost matrix for minimum snap (7th order) trajectory generation.
     Integrates the square of the 4th derivative (snap) over [0, T].
@@ -132,92 +132,122 @@ def allocation_matrix(l,d):
     ])
 
 # Function to evaluate 5th order polynomial
-def evaluate_polynomial(t, coeffs):
+def evaluate_polynomial(t, coeffs, order=5):
     """
-    Evaluate a 5th order polynomial: a0 + a1*t + a2*t^2 + a3*t^3 + a4*t^4 + a5*t^5
+    Evaluate a polynomial of specified order at time t.
+    order: 5 for 5th order (6 coefficients), 7 for 7th order (8 coefficients)
     """
-    return (coeffs[0] + coeffs[1]*t + coeffs[2]*t**2 + 
-            coeffs[3]*t**3 + coeffs[4]*t**4 + coeffs[5]*t**5)
-
+    if order == 5:
+        return sum([coeffs[i] * t**i for i in range(6)])
+    elif order == 7:
+        return sum([coeffs[i] * t**i for i in range(8)])
+    else:
+        raise ValueError("Order must be 5 or 7.")
 
 # Function to evaluate velocity (1st derivative)
-def evaluate_velocity(t, coeffs):
+def evaluate_velocity(t, coeffs, order=5):
     """
     Evaluate velocity: a1 + 2*a2*t + 3*a3*t^2 + 4*a4*t^3 + 5*a5*t^4
     """
-    return (coeffs[1] + 2*coeffs[2]*t + 3*coeffs[3]*t**2 + 
-            4*coeffs[4]*t**3 + 5*coeffs[5]*t**4)
+    if order == 5:
+        return (coeffs[1] + 2*coeffs[2]*t + 3*coeffs[3]*t**2 +
+                4*coeffs[4]*t**3 + 5*coeffs[5]*t**4)
+    elif order == 7:
+        return (coeffs[1] + 2*coeffs[2]*t + 3*coeffs[3]*t**2 +
+                4*coeffs[4]*t**3 + 5*coeffs[5]*t**4 +
+                6*coeffs[6]*t**5 + 7*coeffs[7]*t**6)
+    else:
+        raise ValueError("Order must be 5 or 7.")
 
 # Function to evaluate acceleration (2nd derivative)
-def evaluate_acceleration(t, coeffs):
+def evaluate_acceleration(t, coeffs, order=5):
     """
     Evaluate acceleration: 2*a2 + 6*a3*t + 12*a4*t^2 + 20*a5*t^3
     """
-    return (2*coeffs[2] + 6*coeffs[3]*t + 12*coeffs[4]*t**2 + 20*coeffs[5]*t**3)
+    if order == 5:
+        return (2*coeffs[2] + 6*coeffs[3]*t + 12*coeffs[4]*t**2 + 20*coeffs[5]*t**3)
+    elif order == 7:
+        return (2*coeffs[2] + 6*coeffs[3]*t + 12*coeffs[4]*t**2 + 20*coeffs[5]*t**3 +
+                30*coeffs[6]*t**4 + 42*coeffs[7]*t**5)
+    else:
+        raise ValueError("Order must be 5 or 7.")
 
 # Function to evaluate jerk (3rd derivative)
-def evaluate_jerk(t, coeffs):
+def evaluate_jerk(t, coeffs, order=5):
     """
     Evaluate jerk: 6*a3 + 24*a4*t + 60*a5*t^2
     """
-    return (6*coeffs[3] + 24*coeffs[4]*t + 60*coeffs[5]*t**2)
+    if order == 5:
+        return (6*coeffs[3] + 24*coeffs[4]*t + 60*coeffs[5]*t**2)
+    elif order == 7:
+        return (6*coeffs[3] + 24*coeffs[4]*t + 60*coeffs[5]*t**2 +
+                120*coeffs[6]*t**3 + 210*coeffs[7]*t**4)
+    else:
+        raise ValueError("Order must be 5 or 7.")
 
 # Function to evaluate snap (4th derivative)
-def evaluate_snap(t, coeffs):
+def evaluate_snap(t, coeffs, order=5):
     """
     Evaluate snap: 24*a4 + 120*a5*t
     """
-    return (24*coeffs[4] + 120*coeffs[5]*t)
+    if order == 5:
+        return (24*coeffs[4] + 120*coeffs[5]*t)
+    elif order == 7:
+        return (24*coeffs[4] + 120*coeffs[5]*t +
+                360*coeffs[6]*t**2 + 840*coeffs[7]*t**3)
+    else:
+        raise ValueError("Order must be 5 or 7.")
 
 # Function to compute forces using the same method as trajectory_calcs.py
-def compute_forces(t, p_coeffs):
+def compute_forces(t, p_coeffs, order=7):
     """
     Compute motor forces at time t for a given segment using the same method as trajectory_calcs.py
+    Supports both 5th and 7th order polynomials.
     """
     # Get trajectory state at time t within the segment
     tau = t  # Time within the segment
-    
+
     # Get position, velocity, acceleration, jerk using polynomial evaluation
     r = np.array([
-        evaluate_polynomial(tau, p_coeffs['x']),
-        evaluate_polynomial(tau, p_coeffs['y']),
-        evaluate_polynomial(tau, p_coeffs['z'])
+        evaluate_polynomial(tau, p_coeffs['x'], order=order),
+        evaluate_polynomial(tau, p_coeffs['y'], order=order),
+        evaluate_polynomial(tau, p_coeffs['z'], order=order)
     ])
-    
+
     v = np.array([
-        evaluate_velocity(tau, p_coeffs['x']),
-        evaluate_velocity(tau, p_coeffs['y']),
-        evaluate_velocity(tau, p_coeffs['z'])
+        evaluate_velocity(tau, p_coeffs['x'], order=order),
+        evaluate_velocity(tau, p_coeffs['y'], order=order),
+        evaluate_velocity(tau, p_coeffs['z'], order=order)
     ])
-    
+
     a = np.array([
-        evaluate_acceleration(tau, p_coeffs['x']),
-        evaluate_acceleration(tau, p_coeffs['y']),
-        evaluate_acceleration(tau, p_coeffs['z'])
+        evaluate_acceleration(tau, p_coeffs['x'], order=order),
+        evaluate_acceleration(tau, p_coeffs['y'], order=order),
+        evaluate_acceleration(tau, p_coeffs['z'], order=order)
     ])
-    
+
     j = np.array([
-        evaluate_jerk(tau, p_coeffs['x']),
-        evaluate_jerk(tau, p_coeffs['y']),
-        evaluate_jerk(tau, p_coeffs['z'])
+        evaluate_jerk(tau, p_coeffs['x'], order=order),
+        evaluate_jerk(tau, p_coeffs['y'], order=order),
+        evaluate_jerk(tau, p_coeffs['z'], order=order)
     ])
-    
+
     # Compute snap (4th derivative)
     s = np.array([
-        evaluate_snap(tau, p_coeffs['x']),
-        evaluate_snap(tau, p_coeffs['y']),
-        evaluate_snap(tau, p_coeffs['z'])
+        evaluate_snap(tau, p_coeffs['x'], order=order),
+        evaluate_snap(tau, p_coeffs['y'], order=order),
+        evaluate_snap(tau, p_coeffs['z'], order=order)
     ])
-    
+
     # Compute desired acceleration including gravity
     a_d = a + np.array([0, 0, g])
     a_d_hat = a_d / np.linalg.norm(a_d)
     T_d_hat = np.array([0, 0, 1])
     I = np.identity(3)
-    
+
     # Compute rotation matrix and angular velocities
     theta = np.arccos(np.clip(np.dot(T_d_hat, a_d_hat), -1.0, 1.0))
-    
+
     if np.allclose(a_d_hat, T_d_hat):
         n_hat = np.array([0, 0, 1])
         w = np.zeros(3)
@@ -229,40 +259,36 @@ def compute_forces(t, p_coeffs):
         n_cross = cross_matrix(n_hat)
         R_d = I + np.sin(theta) * n_cross + (1-np.cos(theta)) * n_cross @ n_cross
         q_d = np.concatenate(([np.cos(theta/2)], n_hat*np.sin(theta)))
-        
+
         a_hat_dot = get_a_dot_hat(a_d, j)
         w = R_d.T @ a_hat_dot
         wx = -w[1]
         w[1] = w[0]
         w[0] = wx
         w[2] = 0
-        
+
         a_hat_doubledot = s / np.linalg.norm(a_d) - (2 * j * (a_d @ j) + a_d * (j @ j + a_d @ s)) / np.linalg.norm(a_d)**3 + 3 * a_d * (a_d @ j)**2 / np.linalg.norm(a_d)**5
         wdot = R_d.T @ a_hat_doubledot - cross_matrix(w) @ R_d.T @ a_hat_dot
         wdotx = -wdot[1]
         wdot[1] = wdot[0]
         wdot[0] = wdotx
         wdot[2] = 0
-    
+
     # Compute torques and forces
     tau = J @ wdot + np.cross(w, J @ w)
     T_val = m * np.linalg.norm(a_d)
     tau_full = np.array([T_val, *tau])
-    
+
     # Solve for motor forces using allocation matrix
     a_matrix = allocation_matrix(l, d)
     f = np.linalg.solve(a_matrix, tau_full)
-    
+
     return f
 
-def plot_positions(coeffs, Ts, segment_times, points_per_segment=200):
+def plot_positions(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Plot position vs time for all three axes"""
-    # Get position data using the get function
-    t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, points_per_segment)
-    
-    # Create plot
+    t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, points_per_segment, order=order)
     fig, ax = plt.subplots(figsize=(14, 8))
-    
     ax.plot(t_traj, x_traj, 'r-', linewidth=2, label='X Position')
     ax.plot(t_traj, y_traj, 'g-', linewidth=2, label='Y Position')
     ax.plot(t_traj, z_traj, 'b-', linewidth=2, label='Z Position')
@@ -271,21 +297,14 @@ def plot_positions(coeffs, Ts, segment_times, points_per_segment=200):
     ax.set_title('Position vs Time')
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
-    # Add vertical lines at segment boundaries
     for t in segment_times:
         ax.axvline(x=t, color='gray', linestyle='--', alpha=0.5)
-    
     return fig, ax, (t_traj, x_traj, y_traj, z_traj)
 
-def plot_velocities(coeffs, Ts, segment_times, points_per_segment=200):
+def plot_velocities(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Plot velocity vs time for all three axes"""
-    # Get velocity data using the get function
-    t_traj, x_vel, y_vel, z_vel = get_velocities(coeffs, Ts, segment_times, points_per_segment)
-    
-    # Create plot
+    t_traj, x_vel, y_vel, z_vel = get_velocities(coeffs, Ts, segment_times, points_per_segment, order=order)
     fig, ax = plt.subplots(figsize=(14, 8))
-    
     ax.plot(t_traj, x_vel, 'r-', linewidth=2, label='X Velocity')
     ax.plot(t_traj, y_vel, 'g-', linewidth=2, label='Y Velocity')
     ax.plot(t_traj, z_vel, 'b-', linewidth=2, label='Z Velocity')
@@ -294,21 +313,14 @@ def plot_velocities(coeffs, Ts, segment_times, points_per_segment=200):
     ax.set_title('Velocity vs Time')
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
-    # Add vertical lines at segment boundaries
     for t in segment_times:
         ax.axvline(x=t, color='gray', linestyle='--', alpha=0.5)
-    
     return fig, ax, (t_traj, x_vel, y_vel, z_vel)
 
-def plot_accelerations(coeffs, Ts, segment_times, points_per_segment=200):
+def plot_accelerations(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Plot acceleration vs time for all three axes"""
-    # Get acceleration data using the get function
-    t_traj, x_acc, y_acc, z_acc = get_accelerations(coeffs, Ts, segment_times, points_per_segment)
-    
-    # Create plot
+    t_traj, x_acc, y_acc, z_acc = get_accelerations(coeffs, Ts, segment_times, points_per_segment, order=order)
     fig, ax = plt.subplots(figsize=(14, 8))
-    
     ax.plot(t_traj, x_acc, 'r-', linewidth=2, label='X Acceleration')
     ax.plot(t_traj, y_acc, 'g-', linewidth=2, label='Y Acceleration')
     ax.plot(t_traj, z_acc, 'b-', linewidth=2, label='Z Acceleration')
@@ -317,21 +329,14 @@ def plot_accelerations(coeffs, Ts, segment_times, points_per_segment=200):
     ax.set_title('Acceleration vs Time')
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
-    # Add vertical lines at segment boundaries
     for t in segment_times:
         ax.axvline(x=t, color='gray', linestyle='--', alpha=0.5)
-    
     return fig, ax, (t_traj, x_acc, y_acc, z_acc)
 
-def plot_jerks(coeffs, Ts, segment_times, points_per_segment=200):
+def plot_jerks(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Plot jerk vs time for all three axes"""
-    # Get jerk data using the get function
-    t_traj, x_jerk, y_jerk, z_jerk = get_jerks(coeffs, Ts, segment_times, points_per_segment)
-    
-    # Create plot
+    t_traj, x_jerk, y_jerk, z_jerk = get_jerks(coeffs, Ts, segment_times, points_per_segment, order=order)
     fig, ax = plt.subplots(figsize=(14, 8))
-    
     ax.plot(t_traj, x_jerk, 'r-', linewidth=2, label='X Jerk')
     ax.plot(t_traj, y_jerk, 'g-', linewidth=2, label='Y Jerk')
     ax.plot(t_traj, z_jerk, 'b-', linewidth=2, label='Z Jerk')
@@ -340,21 +345,14 @@ def plot_jerks(coeffs, Ts, segment_times, points_per_segment=200):
     ax.set_title('Jerk vs Time')
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
-    # Add vertical lines at segment boundaries
     for t in segment_times:
         ax.axvline(x=t, color='gray', linestyle='--', alpha=0.5)
-    
     return fig, ax, (t_traj, x_jerk, y_jerk, z_jerk)
 
-def plot_snaps(coeffs, Ts, segment_times, points_per_segment=200):
+def plot_snaps(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Plot snap vs time for all three axes"""
-    # Get snap data using the get function
-    t_traj, x_snap, y_snap, z_snap = get_snaps(coeffs, Ts, segment_times, points_per_segment)
-    
-    # Create plot
+    t_traj, x_snap, y_snap, z_snap = get_snaps(coeffs, Ts, segment_times, points_per_segment, order=order)
     fig, ax = plt.subplots(figsize=(14, 8))
-    
     ax.plot(t_traj, x_snap, 'r-', linewidth=2, label='X Snap')
     ax.plot(t_traj, y_snap, 'g-', linewidth=2, label='Y Snap')
     ax.plot(t_traj, z_snap, 'b-', linewidth=2, label='Z Snap')
@@ -363,21 +361,104 @@ def plot_snaps(coeffs, Ts, segment_times, points_per_segment=200):
     ax.set_title('Snap vs Time')
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
-    # Add vertical lines at segment boundaries
     for t in segment_times:
         ax.axvline(x=t, color='gray', linestyle='--', alpha=0.5)
-    
     return fig, ax, (t_traj, x_snap, y_snap, z_snap)
 
-def plot_forces(coeffs, Ts, segment_times, points_per_segment=200):
-    """Plot motor forces vs time"""
+def compute_forces(t, p_coeffs, order=7):
+    """
+    Compute motor forces at time t for a given segment using the same method as trajectory_calcs.py
+    Supports both 5th and 7th order polynomials.
+    """
+    # Get trajectory state at time t within the segment
+    tau = t  # Time within the segment
+
+    # Get position, velocity, acceleration, jerk using polynomial evaluation
+    r = np.array([
+        evaluate_polynomial(tau, p_coeffs['x'], order=order),
+        evaluate_polynomial(tau, p_coeffs['y'], order=order),
+        evaluate_polynomial(tau, p_coeffs['z'], order=order)
+    ])
+
+    v = np.array([
+        evaluate_velocity(tau, p_coeffs['x'], order=order),
+        evaluate_velocity(tau, p_coeffs['y'], order=order),
+        evaluate_velocity(tau, p_coeffs['z'], order=order)
+    ])
+
+    a = np.array([
+        evaluate_acceleration(tau, p_coeffs['x'], order=order),
+        evaluate_acceleration(tau, p_coeffs['y'], order=order),
+        evaluate_acceleration(tau, p_coeffs['z'], order=order)
+    ])
+
+    j = np.array([
+        evaluate_jerk(tau, p_coeffs['x'], order=order),
+        evaluate_jerk(tau, p_coeffs['y'], order=order),
+        evaluate_jerk(tau, p_coeffs['z'], order=order)
+    ])
+
+    # Compute snap (4th derivative)
+    s = np.array([
+        evaluate_snap(tau, p_coeffs['x'], order=order),
+        evaluate_snap(tau, p_coeffs['y'], order=order),
+        evaluate_snap(tau, p_coeffs['z'], order=order)
+    ])
+
+    # Compute desired acceleration including gravity
+    a_d = a + np.array([0, 0, g])
+    a_d_hat = a_d / np.linalg.norm(a_d)
+    T_d_hat = np.array([0, 0, 1])
+    I = np.identity(3)
+
+    # Compute rotation matrix and angular velocities
+    theta = np.arccos(np.clip(np.dot(T_d_hat, a_d_hat), -1.0, 1.0))
+
+    if np.allclose(a_d_hat, T_d_hat):
+        n_hat = np.array([0, 0, 1])
+        w = np.zeros(3)
+        wdot = np.zeros(3)
+        q_d = np.concatenate(([np.cos(theta/2)], n_hat*np.sin(theta)))
+    else:
+        n = np.cross(T_d_hat, a_d_hat)
+        n_hat = n / np.linalg.norm(n)
+        n_cross = cross_matrix(n_hat)
+        R_d = I + np.sin(theta) * n_cross + (1-np.cos(theta)) * n_cross @ n_cross
+        q_d = np.concatenate(([np.cos(theta/2)], n_hat*np.sin(theta)))
+
+        a_hat_dot = get_a_dot_hat(a_d, j)
+        w = R_d.T @ a_hat_dot
+        wx = -w[1]
+        w[1] = w[0]
+        w[0] = wx
+        w[2] = 0
+
+        a_hat_doubledot = s / np.linalg.norm(a_d) - (2 * j * (a_d @ j) + a_d * (j @ j + a_d @ s)) / np.linalg.norm(a_d)**3 + 3 * a_d * (a_d @ j)**2 / np.linalg.norm(a_d)**5
+        wdot = R_d.T @ a_hat_doubledot - cross_matrix(w) @ R_d.T @ a_hat_dot
+        wdotx = -wdot[1]
+        wdot[1] = wdot[0]
+        wdot[0] = wdotx
+        wdot[2] = 0
+
+    # Compute torques and forces
+    tau = J @ wdot + np.cross(w, J @ w)
+    T_val = m * np.linalg.norm(a_d)
+    tau_full = np.array([T_val, *tau])
+
+    # Solve for motor forces using allocation matrix
+    a_matrix = allocation_matrix(l, d)
+    f = np.linalg.solve(a_matrix, tau_full)
+
+    return f
+
+def plot_forces(coeffs, Ts, segment_times, points_per_segment=200, order=7):
+    """Plot motor forces vs time, supports order argument"""
     # Get force data using the get function
-    t_traj, f1, f2, f3, f4 = get_forces(coeffs, Ts, segment_times, points_per_segment)
-    
+    t_traj, f1, f2, f3, f4 = get_forces(coeffs, Ts, segment_times, points_per_segment, order=order)
+
     # Create plot
     fig, ax = plt.subplots(figsize=(14, 8))
-    
+
     ax.plot(t_traj, f1, 'r-', linewidth=2, label='Motor 1')
     ax.plot(t_traj, f2, 'g-', linewidth=2, label='Motor 2')
     ax.plot(t_traj, f3, 'b-', linewidth=2, label='Motor 3')
@@ -387,14 +468,14 @@ def plot_forces(coeffs, Ts, segment_times, points_per_segment=200):
     ax.set_title('Motor Forces vs Time')
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
+
     # Add vertical lines at segment boundaries
     for t in segment_times:
         ax.axvline(x=t, color='gray', linestyle='--', alpha=0.5)
-    
+
     return fig, ax, (t_traj, f1, f2, f3, f4)
 
-def get_velocities(coeffs, Ts, segment_times, points_per_segment=200):
+def get_velocities(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Get velocity data for all three axes without plotting"""
     # Initialize arrays to store velocity data
     x_vel = []
@@ -413,10 +494,10 @@ def get_velocities(coeffs, Ts, segment_times, points_per_segment=200):
         t_segment = np.linspace(0, Ts[i], points_per_segment)
         
         # Evaluate velocity for this segment
-        x_vel_segment = [evaluate_velocity(t, p_coeffs['x']) for t in t_segment]
-        y_vel_segment = [evaluate_velocity(t, p_coeffs['y']) for t in t_segment]
-        z_vel_segment = [evaluate_velocity(t, p_coeffs['z']) for t in t_segment]
-        
+        x_vel_segment = [evaluate_velocity(t, p_coeffs['x'], order=order) for t in t_segment]
+        y_vel_segment = [evaluate_velocity(t, p_coeffs['y'], order=order) for t in t_segment]
+        z_vel_segment = [evaluate_velocity(t, p_coeffs['z'], order=order) for t in t_segment]
+
         # Add to velocity arrays
         x_vel.extend(x_vel_segment)
         y_vel.extend(y_vel_segment)
@@ -431,7 +512,7 @@ def get_velocities(coeffs, Ts, segment_times, points_per_segment=200):
     
     return t_traj, x_vel, y_vel, z_vel
 
-def get_positions(coeffs, Ts, segment_times, points_per_segment=200):
+def get_positions(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Get position data for all three axes without plotting"""
     # Initialize arrays to store trajectory points
     x_traj = []
@@ -451,10 +532,10 @@ def get_positions(coeffs, Ts, segment_times, points_per_segment=200):
         t_segment = np.linspace(0, Ts[i], points_per_segment)
         
         # Evaluate polynomial for this segment
-        x_segment = [evaluate_polynomial(t, p_coeffs['x']) for t in t_segment]
-        y_segment = [evaluate_polynomial(t, p_coeffs['y']) for t in t_segment]
-        z_segment = [evaluate_polynomial(t, p_coeffs['z']) for t in t_segment]
-        
+        x_segment = [evaluate_polynomial(t, p_coeffs['x'], order=order) for t in t_segment]
+        y_segment = [evaluate_polynomial(t, p_coeffs['y'], order=order) for t in t_segment]
+        z_segment = [evaluate_polynomial(t, p_coeffs['z'], order=order) for t in t_segment]
+
         # Add to trajectory arrays
         x_traj.extend(x_segment)
         y_traj.extend(y_segment)
@@ -469,7 +550,7 @@ def get_positions(coeffs, Ts, segment_times, points_per_segment=200):
     
     return t_traj, x_traj, y_traj, z_traj
 
-def get_accelerations(coeffs, Ts, segment_times, points_per_segment=200):
+def get_accelerations(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Get acceleration data for all three axes without plotting"""
     # Initialize arrays to store acceleration data
     x_acc = []
@@ -488,10 +569,10 @@ def get_accelerations(coeffs, Ts, segment_times, points_per_segment=200):
         t_segment = np.linspace(0, Ts[i], points_per_segment)
         
         # Evaluate acceleration for this segment
-        x_acc_segment = [evaluate_acceleration(t, p_coeffs['x']) for t in t_segment]
-        y_acc_segment = [evaluate_acceleration(t, p_coeffs['y']) for t in t_segment]
-        z_acc_segment = [evaluate_acceleration(t, p_coeffs['z']) for t in t_segment]
-        
+        x_acc_segment = [evaluate_acceleration(t, p_coeffs['x'], order=order) for t in t_segment]
+        y_acc_segment = [evaluate_acceleration(t, p_coeffs['y'], order=order) for t in t_segment]
+        z_acc_segment = [evaluate_acceleration(t, p_coeffs['z'], order=order) for t in t_segment]
+
         # Add to acceleration arrays
         x_acc.extend(x_acc_segment)
         y_acc.extend(y_acc_segment)
@@ -506,7 +587,7 @@ def get_accelerations(coeffs, Ts, segment_times, points_per_segment=200):
     
     return t_traj, x_acc, y_acc, z_acc
 
-def get_jerks(coeffs, Ts, segment_times, points_per_segment=200):
+def get_jerks(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Get jerk data for all three axes without plotting"""
     # Initialize arrays to store jerk data
     x_jerk = []
@@ -525,10 +606,10 @@ def get_jerks(coeffs, Ts, segment_times, points_per_segment=200):
         t_segment = np.linspace(0, Ts[i], points_per_segment)
         
         # Evaluate jerk for this segment
-        x_jerk_segment = [evaluate_jerk(t, p_coeffs['x']) for t in t_segment]
-        y_jerk_segment = [evaluate_jerk(t, p_coeffs['y']) for t in t_segment]
-        z_jerk_segment = [evaluate_jerk(t, p_coeffs['z']) for t in t_segment]
-        
+        x_jerk_segment = [evaluate_jerk(t, p_coeffs['x'], order=order) for t in t_segment]
+        y_jerk_segment = [evaluate_jerk(t, p_coeffs['y'], order=order) for t in t_segment]
+        z_jerk_segment = [evaluate_jerk(t, p_coeffs['z'], order=order) for t in t_segment]
+
         # Add to jerk arrays
         x_jerk.extend(x_jerk_segment)
         y_jerk.extend(y_jerk_segment)
@@ -543,7 +624,7 @@ def get_jerks(coeffs, Ts, segment_times, points_per_segment=200):
     
     return t_traj, x_jerk, y_jerk, z_jerk
 
-def get_snaps(coeffs, Ts, segment_times, points_per_segment=200):
+def get_snaps(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Get snap data for all three axes without plotting"""
     # Initialize arrays to store snap data
     x_snap = []
@@ -562,10 +643,10 @@ def get_snaps(coeffs, Ts, segment_times, points_per_segment=200):
         t_segment = np.linspace(0, Ts[i], points_per_segment)
         
         # Evaluate snap for this segment
-        x_snap_segment = [evaluate_snap(t, p_coeffs['x']) for t in t_segment]
-        y_snap_segment = [evaluate_snap(t, p_coeffs['y']) for t in t_segment]
-        z_snap_segment = [evaluate_snap(t, p_coeffs['z']) for t in t_segment]
-        
+        x_snap_segment = [evaluate_snap(t, p_coeffs['x'], order=order) for t in t_segment]
+        y_snap_segment = [evaluate_snap(t, p_coeffs['y'], order=order) for t in t_segment]
+        z_snap_segment = [evaluate_snap(t, p_coeffs['z'], order=order) for t in t_segment]
+
         # Add to snap arrays
         x_snap.extend(x_snap_segment)
         y_snap.extend(y_snap_segment)
@@ -580,55 +661,55 @@ def get_snaps(coeffs, Ts, segment_times, points_per_segment=200):
     
     return t_traj, x_snap, y_snap, z_snap
 
-def get_forces(coeffs, Ts, segment_times, points_per_segment=200):
-    """Get motor force data without plotting"""
+def get_forces(coeffs, Ts, segment_times, points_per_segment=200, order=7):
+    """Get motor force data without plotting, supports order argument"""
     # Initialize arrays to store force data
     f1 = []
     f2 = []
     f3 = []
     f4 = []
     t_traj = []
-    
+
     # Compute forces for each segment
     for i in range(len(Ts)):
         segment_start = segment_times[i]
-        
+
         # Get coefficients for this segment
         p_coeffs = coeffs[f'p{i+1}_coeffs']
-        
+
         # Generate time points for this segment
         t_segment = np.linspace(0, Ts[i], points_per_segment)
-        
+
         # Compute forces for this segment
         f1_segment = []
         f2_segment = []
         f3_segment = []
         f4_segment = []
-        
+
         for t in t_segment:
-            forces = compute_forces(t, p_coeffs)
+            forces = compute_forces(t, p_coeffs, order=order)
             f1_segment.append(forces[0])
             f2_segment.append(forces[1])
             f3_segment.append(forces[2])
             f4_segment.append(forces[3])
-        
+
         # Add to force arrays
         f1.extend(f1_segment)
         f2.extend(f2_segment)
         f3.extend(f3_segment)
         f4.extend(f4_segment)
         t_traj.extend(t_segment + segment_start)
-    
+
     # Convert to numpy arrays
     f1 = np.array(f1)
     f2 = np.array(f2)
     f3 = np.array(f3)
     f4 = np.array(f4)
     t_traj = np.array(t_traj)
-    
+
     return t_traj, f1, f2, f3, f4
 
-def print_trajectory_info(coeffs, Ts, total_time, points_per_segment=200):
+def print_trajectory_info(coeffs, Ts, total_time, points_per_segment=200, order=7):
     """Print comprehensive trajectory information using polynomial evaluation"""
     # Get trajectory data for analysis
     segment_times = np.cumsum([0] + list(Ts))
@@ -667,32 +748,32 @@ def print_trajectory_info(coeffs, Ts, total_time, points_per_segment=200):
         # Evaluate all quantities for this segment
         for t in t_segment:
             # Position
-            x_traj.append(evaluate_polynomial(t, p_coeffs['x']))
-            y_traj.append(evaluate_polynomial(t, p_coeffs['y']))
-            z_traj.append(evaluate_polynomial(t, p_coeffs['z']))
-            
+            x_traj.append(evaluate_polynomial(t, p_coeffs['x'], order=order))
+            y_traj.append(evaluate_polynomial(t, p_coeffs['y'], order=order))
+            z_traj.append(evaluate_polynomial(t, p_coeffs['z'], order=order))
+
             # Velocity
-            x_vel.append(evaluate_velocity(t, p_coeffs['x']))
-            y_vel.append(evaluate_velocity(t, p_coeffs['y']))
-            z_vel.append(evaluate_velocity(t, p_coeffs['z']))
-            
+            x_vel.append(evaluate_velocity(t, p_coeffs['x'], order=order))
+            y_vel.append(evaluate_velocity(t, p_coeffs['y'], order=order))
+            z_vel.append(evaluate_velocity(t, p_coeffs['z'], order=order))
+
             # Acceleration
-            x_acc.append(evaluate_acceleration(t, p_coeffs['x']))
-            y_acc.append(evaluate_acceleration(t, p_coeffs['y']))
-            z_acc.append(evaluate_acceleration(t, p_coeffs['z']))
-            
+            x_acc.append(evaluate_acceleration(t, p_coeffs['x'], order=order))
+            y_acc.append(evaluate_acceleration(t, p_coeffs['y'], order=order))
+            z_acc.append(evaluate_acceleration(t, p_coeffs['z'], order=order))
+
             # Jerk
-            x_jerk.append(evaluate_jerk(t, p_coeffs['x']))
-            y_jerk.append(evaluate_jerk(t, p_coeffs['y']))
-            z_jerk.append(evaluate_jerk(t, p_coeffs['z']))
-            
+            x_jerk.append(evaluate_jerk(t, p_coeffs['x'], order=order))
+            y_jerk.append(evaluate_jerk(t, p_coeffs['y'], order=order))
+            z_jerk.append(evaluate_jerk(t, p_coeffs['z'], order=order))
+
             # Snap
-            x_snap.append(evaluate_snap(t, p_coeffs['x']))
-            y_snap.append(evaluate_snap(t, p_coeffs['y']))
-            z_snap.append(evaluate_snap(t, p_coeffs['z']))
-            
+            x_snap.append(evaluate_snap(t, p_coeffs['x'], order=order))
+            y_snap.append(evaluate_snap(t, p_coeffs['y'], order=order))
+            z_snap.append(evaluate_snap(t, p_coeffs['z'], order=order))
+
             # Forces
-            forces = compute_forces(t, p_coeffs)
+            forces = compute_forces(t, p_coeffs, order=order)
             f1.append(forces[0])
             f2.append(forces[1])
             f3.append(forces[2])

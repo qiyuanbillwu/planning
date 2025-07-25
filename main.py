@@ -59,7 +59,7 @@ Ts = np.array(optimized_params['optimized_times'])  # Duration of each segment
 total_time = optimized_params['total_time']
 segment_times = np.cumsum([0] + list(Ts))  
 
-fig2, ax2, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_times)
+fig2, ax2, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_times, order =5)
 # _, x_vel, y_vel, z_vel = get_velocities(coeffs, Ts, segment_times)
 
 # get the maximum absolute velocity in x, y, z
@@ -75,7 +75,7 @@ for _ in range(20):
     # Load the updated coefficients from the JSON file
     with open('data/polynomial_coefficients.json', 'r') as f:
         coeffs = json.load(f)
-    _, x_vel, y_vel, z_vel = get_velocities(coeffs, Ts, segment_times)
+    _, x_vel, y_vel, z_vel = get_velocities(coeffs, Ts, segment_times, order=5)
     max_vel = np.max(np.abs(np.array([x_vel, y_vel, z_vel])))
     if max_vel <= v_max:
         break
@@ -91,16 +91,16 @@ end_time = time.time()
 print(f"Time taken: {end_time - start_time} seconds")
 
 # plot the new velocity
-fig3, ax3, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_times)
+fig3, ax3, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_times, order=5)
 
 # # plot acceleration
-# fig4, ax4, (t_acc, x_acc, y_acc, z_acc) = plot_accelerations(coeffs, Ts, segment_times)
+# fig4, ax4, (t_acc, x_acc, y_acc, z_acc) = plot_accelerations(coeffs, Ts, segment_times, order=5)
 
 # # plot jerk
-# fig5, ax5, (t_jerk, x_jerk, y_jerk, z_jerk) = plot_jerks(coeffs, Ts, segment_times)
+# fig5, ax5, (t_jerk, x_jerk, y_jerk, z_jerk) = plot_jerks(coeffs, Ts, segment_times, order=5)
 
 # # plot snap
-# fig6, ax6, (t_snap, x_snap, y_snap, z_snap) = plot_snaps(coeffs, Ts, segment_times)
+# fig6, ax6, (t_snap, x_snap, y_snap, z_snap) = plot_snaps(coeffs, Ts, segment_times, order=5)
 
 
 

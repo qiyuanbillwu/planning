@@ -4,8 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils import get_a_dot_hat, cross_matrix, allocation_matrix, a, a5
 from constants import J, l, d, m, g, T1, T2
+from mpl_toolkits.mplot3d import Axes3D
 
 # === Option to select trajectory type ===
 # Set TRAJ_TYPE to 'snap' or 'jerk'. You can also set via command line: python trajectory_calcs.py jerk
@@ -216,5 +219,15 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
 
+    # Plot 3d trajectory
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(positions[:,0], positions[:,1], positions[:,2], label='Trajectory')
+    ax.set_xlabel('X Position (m)')
+    ax.set_ylabel('Y Position (m)')
+    ax.set_zlabel('Z Position (m)')
+    ax.set_title('3D Trajectory')
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
