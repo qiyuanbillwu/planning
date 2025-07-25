@@ -449,7 +449,7 @@ def compute_forces(t, p_coeffs, order=7):
     a_matrix = allocation_matrix(l, d)
     f = np.linalg.solve(a_matrix, tau_full)
 
-    return f
+    return f, a_d_hat
 
 def plot_forces(coeffs, Ts, segment_times, points_per_segment=200, order=7):
     """Plot motor forces vs time, supports order argument"""
@@ -687,7 +687,7 @@ def get_forces(coeffs, Ts, segment_times, points_per_segment=200, order=7):
         f4_segment = []
 
         for t in t_segment:
-            forces = compute_forces(t, p_coeffs, order=order)
+            forces, _ = compute_forces(t, p_coeffs, order=order)
             f1_segment.append(forces[0])
             f2_segment.append(forces[1])
             f3_segment.append(forces[2])
