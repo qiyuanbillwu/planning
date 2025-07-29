@@ -30,6 +30,6 @@ fig5, ax5, (t_snap, x_snap, y_snap, z_snap) = plot_snaps(coeffs, Ts, segment_tim
 fig6, ax6, (t_forces, f1, f2, f3, f4) = plot_forces(coeffs, Ts, segment_times, order=5)
 
 # Print trajectory information
-print_trajectory_info(coeffs, Ts, total_time, order=5)
+# print_trajectory_info(coeffs, Ts, total_time, order=5)
 
 plt.show()

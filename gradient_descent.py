@@ -7,14 +7,23 @@ import json
 import time
 
 # Extract 8 waypoints from waypoints.txt
-r0 = np.array([18.2908, -12.9164, 0.5])
-r1 = np.array([16.0048, -6.01777, 0.746351])
-r2 = np.array([9.74278, -4.28989, 3.58934])
-r3 = np.array([2.32316, -1.06404, 1.57101])
-r4 = np.array([-2.50561, 5.7747, 1.74195])
-r5 = np.array([-5.96077, 10.9205, 1.32572])
-r6 = np.array([-16.5275, 15.9659, 1.26184])
-r7 = np.array([-19.8453, 12.2357, 0.5])
+# r0 = np.array([18.2908, -12.9164, 0.5])
+# r1 = np.array([16.0048, -6.01777, 0.746351])
+# r2 = np.array([9.74278, -4.28989, 3.58934])
+# r3 = np.array([2.32316, -1.06404, 1.57101])
+# r4 = np.array([-2.50561, 5.7747, 1.74195])
+# r5 = np.array([-5.96077, 10.9205, 1.32572])
+# r6 = np.array([-16.5275, 15.9659, 1.26184])
+# r7 = np.array([-19.8453, 12.2357, 0.5])
+
+r0 = np.array([1, 1, 0.5])
+r1 = np.array([0, 1.5, 1])
+r2 = np.array([-0.8, 1, 2])
+r3 = np.array([-1.5, 0, 2.5])
+r4 = np.array([-1, -1, 1.5])
+r5 = np.array([0.25, -0.75, 1])
+r6 = np.array([1, 0, 1.5])
+r7 = np.array([0, 0, 2])
 
 
 def get_coefficients(Ts):
@@ -362,7 +371,7 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
     Ts_history = [Ts_initial.copy()]
     cost_history = []
     
-    # print("Starting gradient descent optimization...")
+    print("Starting gradient descent optimization...")
     
     # Start timing
     start_time_gd = time.time()
@@ -375,7 +384,7 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
         cost_history.append(current_cost)
         
         # Calculate gradients using finite differences
-        delta = 1e-8
+        delta = 1e-8  # Increased for stability and speed
         grad_Ts = np.zeros_like(Ts_current)
         
         for i in range(len(Ts_current)):
@@ -392,9 +401,10 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
         
         # Check convergence
         Ts_change = np.max(np.abs(Ts_new - Ts_current))
-        
-        # if iteration % 100 == 0:
-        #     print(f"Iteration {iteration}: Ts={Ts_current}, Cost={current_cost:.6f}")
+
+        # Print progress every 100 iterations and always print the first and last
+        if iteration % 100 == 0 or iteration == 0 or iteration == max_iterations - 1:
+            print(f"Iteration {iteration}: Cost={current_cost:.6f}, Ts={Ts_current}, Max ΔTs={Ts_change:.6e}")
         
         # Update current values
         Ts_current = Ts_new
@@ -402,25 +412,19 @@ def optimize_times_gradient_descent(Ts_initial, kT, learning_rate=1e-4, max_iter
         
         # Check for convergence
         if Ts_change < tolerance:
-            # print(f"Converged after {iteration} iterations")
+            print(f"Converged after  {iteration} iterations")
             break
     
     end_time_gd = time.time()
     optimization_time = end_time_gd - start_time_gd
     
     print(f"Optimization completed in {optimization_time:.2f} seconds")
-    # print(f"Final Ts: {Ts_current}")
-    # print(f"Final cost: {current_cost:.6f}")
+    print(f"Final Ts: {Ts_current}")
+    print(f"Final cost: {current_cost:.6f}")
     
     # Calculate total time and proportions
     total_time = np.sum(Ts_current)
     time_proportions = Ts_current / total_time
-    
-    # print(f"\nTime Optimization Results:")
-    # print(f"Total time: {total_time:.2f} seconds")
-    # print(f"Time proportions:")
-    # for i, (T, prop) in enumerate(zip(Ts_current, time_proportions)):
-    #     print(f"  Segment {i+1}: {T:.2f}s ({prop:.1%})")
     
     # Return results as dictionary
     results = {
@@ -523,7 +527,7 @@ if __name__ == "__main__":
     # Ts_initial = np.array(time_data['time_proportions']) * total_time
     
     # Option to skip gradient descent
-    use_gradient_descent = False  # Set to False to skip optimization
+    use_gradient_descent = True  # Set to False to skip optimization
     
     if use_gradient_descent:
         # Run optimization

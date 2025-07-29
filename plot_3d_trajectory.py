@@ -4,6 +4,16 @@ from mpl_toolkits.mplot3d import Axes3D
 import json
 from utils import get_positions
 
+r0 = np.array([1.5, -1, 2])
+r1 = np.array([0.5, -1.2, 2])
+r2 = np.array([-0.5, -0.95, 2])
+r3 = np.array([-1, 0, 2])
+r4 = np.array([-0.7, 1, 2])
+r5 = np.array([0.5, 1.8, 2])
+r6 = np.array([1.1, 0.75, 2])
+r7 = np.array([1.5, -1, 2])
+waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
+
 # Load the polynomial coefficients
 with open('data/polynomial_coefficients.json', 'r') as f:
     coeffs = json.load(f)
@@ -31,16 +41,7 @@ ax.view_init(elev=17, azim=-118)  # type: ignore
 ax.plot(x_traj, y_traj, z_traj, 'b-', linewidth=2, label='Trajectory')
 
 # Plot waypoints
-waypoints = np.array([
-    [18.2908, -12.9164, 0.5],      # r0
-    [16.0048, -6.01777, 0.746351], # r1
-    [9.74278, -4.28989, 3.58934],  # r2
-    [2.32316, -1.06404, 1.57101],  # r3
-    [-2.50561, 5.7747, 1.74195],   # r4
-    [-5.96077, 10.9205, 1.32572],  # r5
-    [-16.5275, 15.9659, 1.26184],  # r6
-    [-19.8453, 12.2357, 0.5]       # r7
-])
+waypoints = np.array(waypoints)
 
 ax.scatter(waypoints[:, 0], waypoints[:, 1], waypoints[:, 2], 
            c='red', s=100, marker='o', label='Waypoints') # type: ignore
