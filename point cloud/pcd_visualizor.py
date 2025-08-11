@@ -10,6 +10,7 @@ import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils import get_positions  # Now this should work
+from waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
 
 # Load the PCD file
 pcd = o3d.io.read_point_cloud("/Users/wuqiyuan/Library/Mobile Documents/com~apple~CloudDocs/Desktop/UCLA/research/vectr/richter planning/point cloud/tilted_cylinders.pcd")
@@ -27,20 +28,10 @@ with open("/Users/wuqiyuan/Library/Mobile Documents/com~apple~CloudDocs/Desktop/
 Ts = np.array(time_params["optimized_times"])
 segment_times = np.cumsum([0] + list(Ts))
 
-# Define waypoints (update as needed)
-r0 = np.array([1, 1, 0.5])
-r1 = np.array([0, 1.5, 1])
-r2 = np.array([-0.8, 1, 2])
-r3 = np.array([-1.5, 0, 2.5])
-r4 = np.array([-1, -1, 1.5])
-r5 = np.array([0.25, -0.75, 1])
-r6 = np.array([1, 0, 1.5])
-r7 = np.array([0, 0, 2])
-waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
 waypoints = np.array(waypoints)
 
 # --- Get trajectory points using utils.get_positions ---
-t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, order=5)
+t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, order=7)
 
 # --- Plot 3D point cloud with trajectory and waypoints ---
 fig = plt.figure(figsize=(10, 10))

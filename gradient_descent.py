@@ -1,10 +1,13 @@
 from webbrowser import get
-from utils import a5, Q_jerk
+from utils import a, a5, Q_snap, Q_jerk, beta
+from scipy.linalg import solve_banded
+
 import constants
 import numpy as np
 import matplotlib.pyplot as plt
 import json
 import time
+from waypoints import waypoint_list
 
 # Extract 8 waypoints from waypoints.txt
 # r0 = np.array([18.2908, -12.9164, 0.5])
@@ -25,8 +28,12 @@ r5 = np.array([0.25, -0.75, 1])
 r6 = np.array([1, 0, 1.5])
 r7 = np.array([0, 0, 2])
 
+def calc_time(waypoint_list, v_avg=constants.v_avg):
+    # Calculate the time taken to traverse the waypoints
+    distances = [np.linalg.norm(waypoint_list[i+1] - waypoint_list[i]) for i in range(len(waypoint_list)-1)]
+    return np.array(distances) / v_avg
 
-def get_coefficients(Ts):
+def get_coefficients(Ts, save=True):
 
     T1 = Ts[0]
     T2 = Ts[1]
@@ -150,62 +157,63 @@ def get_coefficients(Ts):
 
     p = A_inv @ d
 
-    # Extract coefficients for each polynomial segment (x, y, z coordinates)
-    p1_coeffs = p[:6, :]  # First 6 coefficients for polynomial 1 (x, y, z)
-    p2_coeffs = p[6:12, :]  # Next 6 coefficients for polynomial 2 (x, y, z)
-    p3_coeffs = p[12:18, :]  # Next 6 coefficients for polynomial 3 (x, y, z)
-    p4_coeffs = p[18:24, :]  # Next 6 coefficients for polynomial 4 (x, y, z)
-    p5_coeffs = p[24:30, :]  # Next 6 coefficients for polynomial 5 (x, y, z)
-    p6_coeffs = p[30:36, :]  # Next 6 coefficients for polynomial 6 (x, y, z)
-    p7_coeffs = p[36:42, :]  # Last 6 coefficients for polynomial 7 (x, y, z)
+    if save == True:
+        # Extract coefficients for each polynomial segment (x, y, z coordinates)
+        p1_coeffs = p[:6, :]  # First 6 coefficients for polynomial 1 (x, y, z)
+        p2_coeffs = p[6:12, :]  # Next 6 coefficients for polynomial 2 (x, y, z)
+        p3_coeffs = p[12:18, :]  # Next 6 coefficients for polynomial 3 (x, y, z)
+        p4_coeffs = p[18:24, :]  # Next 6 coefficients for polynomial 4 (x, y, z)
+        p5_coeffs = p[24:30, :]  # Next 6 coefficients for polynomial 5 (x, y, z)
+        p6_coeffs = p[30:36, :]  # Next 6 coefficients for polynomial 6 (x, y, z)
+        p7_coeffs = p[36:42, :]  # Last 6 coefficients for polynomial 7 (x, y, z)
 
-    # Create data directory if it doesn't exist
-    import os
-    if not os.path.exists('data'):
-        os.makedirs('data')
+        # Create data directory if it doesn't exist
+        import os
+        if not os.path.exists('data'):
+            os.makedirs('data')
 
-    # Save coefficients to JSON file
-    import json
-    coefficients = {
-        "p1_coeffs": {
-            "x": p1_coeffs[:, 0].tolist(),
-            "y": p1_coeffs[:, 1].tolist(),
-            "z": p1_coeffs[:, 2].tolist()
-        },
-        "p2_coeffs": {
-            "x": p2_coeffs[:, 0].tolist(),
-            "y": p2_coeffs[:, 1].tolist(),
-            "z": p2_coeffs[:, 2].tolist()
-        },
-        "p3_coeffs": {
-            "x": p3_coeffs[:, 0].tolist(),
-            "y": p3_coeffs[:, 1].tolist(),
-            "z": p3_coeffs[:, 2].tolist()
-        },
-        "p4_coeffs": {
-            "x": p4_coeffs[:, 0].tolist(),
-            "y": p4_coeffs[:, 1].tolist(),
-            "z": p4_coeffs[:, 2].tolist()
-        },
-        "p5_coeffs": {
-            "x": p5_coeffs[:, 0].tolist(),
-            "y": p5_coeffs[:, 1].tolist(),
-            "z": p5_coeffs[:, 2].tolist()
-        },
-        "p6_coeffs": {
-            "x": p6_coeffs[:, 0].tolist(),
-            "y": p6_coeffs[:, 1].tolist(),
-            "z": p6_coeffs[:, 2].tolist()
-        },
-        "p7_coeffs": {
-            "x": p7_coeffs[:, 0].tolist(),
-            "y": p7_coeffs[:, 1].tolist(),
-            "z": p7_coeffs[:, 2].tolist()
+        # Save coefficients to JSON file
+        import json
+        coefficients = {
+            "p1_coeffs": {
+                "x": p1_coeffs[:, 0].tolist(),
+                "y": p1_coeffs[:, 1].tolist(),
+                "z": p1_coeffs[:, 2].tolist()
+            },
+            "p2_coeffs": {
+                "x": p2_coeffs[:, 0].tolist(),
+                "y": p2_coeffs[:, 1].tolist(),
+                "z": p2_coeffs[:, 2].tolist()
+            },
+            "p3_coeffs": {
+                "x": p3_coeffs[:, 0].tolist(),
+                "y": p3_coeffs[:, 1].tolist(),
+                "z": p3_coeffs[:, 2].tolist()
+            },
+            "p4_coeffs": {
+                "x": p4_coeffs[:, 0].tolist(),
+                "y": p4_coeffs[:, 1].tolist(),
+                "z": p4_coeffs[:, 2].tolist()
+            },
+            "p5_coeffs": {
+                "x": p5_coeffs[:, 0].tolist(),
+                "y": p5_coeffs[:, 1].tolist(),
+                "z": p5_coeffs[:, 2].tolist()
+            },
+            "p6_coeffs": {
+                "x": p6_coeffs[:, 0].tolist(),
+                "y": p6_coeffs[:, 1].tolist(),
+                "z": p6_coeffs[:, 2].tolist()
+            },
+            "p7_coeffs": {
+                "x": p7_coeffs[:, 0].tolist(),
+                "y": p7_coeffs[:, 1].tolist(),
+                "z": p7_coeffs[:, 2].tolist()
+            }
         }
-    }
-    
-    with open('data/polynomial_coefficients.json', 'w') as f:
-        json.dump(coefficients, f, indent=2)
+        
+        with open('data/polynomial_coefficients.json', 'w') as f:
+            json.dump(coefficients, f, indent=2)
 
     return p
 
@@ -498,78 +506,421 @@ def save_optimization_results(results, coefficients):
     # print("- data/polynomial_coefficients.json (coefficients)")
     # print("- data/optimized_time_parameters.json (time parameters)")
 
-# Main execution
-if __name__ == "__main__":
-    # Initial guess for Ts
+def get_coefficients_min_snap(Ts, save=True):
+    """
+    Compute polynomial coefficients for minimum snap (7th order, 8 coefficients per segment).
+    Structure and output matches get_coefficients (min-jerk) but uses min-snap constraints.
+    """
+    T1, T2, T3, T4, T5, T6, T7 = Ts
+
+    Q1 = Q_snap(T1)
+    Q2 = Q_snap(T2)
+    Q3 = Q_snap(T3)
+    Q4 = Q_snap(T4)
+    Q5 = Q_snap(T5)
+    Q6 = Q_snap(T6)
+    Q7 = Q_snap(T7)
+    # Q is an 8x8 matrix for a 7th order (min-snap) polynomial
+
+    # Create an empty (8*7, 8*7) matrix and assign Q1 to Q7 to the diagonal blocks
+    Q_total = np.zeros((8 * 7, 8 * 7))
+    Q_list = [Q1, Q2, Q3, Q4, Q5, Q6, Q7]
+    for i, Q in enumerate(Q_list):
+        Q_total[i*8:(i+1)*8, i*8:(i+1)*8] = Q
+
+    # Waypoints
     waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
 
-    # set average and maximum velocity/acceleration
-    v_max = 5.0
-    v_avg = 3.0
+    # Build df: positions at segment endpoints, zeros for continuity constraints (vel, acc, jerk, snap)
+    df = np.block([
+        [r0],
+        [r1],
+        [r1],
+        [r2],
+        [r2],
+        [r3],
+        [r3],
+        [r4],
+        [r4],
+        [r5],
+        [r5],
+        [r6],
+        [r6],
+        [r7],
+        # continuity constraints (vel, acc, jerk, snap) at each internal waypoint
+        [np.zeros((1, 3))], # v1
+        [np.zeros((1, 3))], # a1
+        [np.zeros((1, 3))], # j1
+        [np.zeros((1, 3))], # s1
+        [np.zeros((1, 3))], # v2
+        [np.zeros((1, 3))], # a2
+        [np.zeros((1, 3))], # j2
+        [np.zeros((1, 3))], # s2
+        [np.zeros((1, 3))], # v3
+        [np.zeros((1, 3))], # a3
+        [np.zeros((1, 3))], # j3
+        [np.zeros((1, 3))], # s3
+        [np.zeros((1, 3))], # v4
+        [np.zeros((1, 3))], # a4
+        [np.zeros((1, 3))], # j4
+        [np.zeros((1, 3))], # s4
+        [np.zeros((1, 3))], # v5
+        [np.zeros((1, 3))], # a5
+        [np.zeros((1, 3))], # j5
+        [np.zeros((1, 3))], # s5
+        [np.zeros((1, 3))], # v6
+        [np.zeros((1, 3))], # a6
+        [np.zeros((1, 3))], # j6
+        [np.zeros((1, 3))], # s6
+    ])
 
-    # set gradient descent parameters
-    kT = 100
-    alpha = 10**(-4)
-    ITER = 1000
-    TOL = 10**(-3)
+    # Build A matrix using a (from utils) for 7th order polynomials
+    A = np.block([
+        [a(0,0), np.zeros((1, 8*6))], # r0 (start of seg 1)
+        [a(0,T1), np.zeros((1, 8*6))], # r1 (end of seg 1)
+        [np.zeros((1, 8)), a(0,0), np.zeros((1, 8*5))], # r1 (start of seg 2)
+        [np.zeros((1, 8)), a(0,T2), np.zeros((1, 8*5))], # r2 (end of seg 2)
+        [np.zeros((1, 8*2)), a(0,0), np.zeros((1, 8*4))], # r2 (start of seg 3)
+        [np.zeros((1, 8*2)), a(0,T3), np.zeros((1, 8*4))], # r3 (end of seg 3)
+        [np.zeros((1, 8*3)), a(0,0), np.zeros((1, 8*3))], # r3 (start of seg 4)
+        [np.zeros((1, 8*3)), a(0,T4), np.zeros((1, 8*3))], # r4 (end of seg 4)
+        [np.zeros((1, 8*4)), a(0,0), np.zeros((1, 8*2))], # r4 (start of seg 5)
+        [np.zeros((1, 8*4)), a(0,T5), np.zeros((1, 8*2))], # r5 (end of seg 5)
+        [np.zeros((1, 8*5)), a(0,0), np.zeros((1, 8*1))], # r5 (start of seg 6)
+        [np.zeros((1, 8*5)), a(0,T6), np.zeros((1, 8*1))], # r6 (end of seg 6)
+        [np.zeros((1, 8*6)), a(0,0)], # r6 (start of seg 7)
+        [np.zeros((1, 8*6)), a(0,T7)], # r7 (end of seg 7)
+        # velocity, acceleration, jerk, snap continuity at each internal waypoint
+        [a(1,T1), -a(1,0), np.zeros((1, 8*5))], # v1
+        [a(2,T1), -a(2,0), np.zeros((1, 8*5))], # a1
+        [a(3,T1), -a(3,0), np.zeros((1, 8*5))], # j1
+        [a(4,T1), -a(4,0), np.zeros((1, 8*5))], # s1
+        [np.zeros((1, 8)), a(1, T2), -a(1, 0), np.zeros((1, 8*4))], # v2
+        [np.zeros((1, 8)), a(2, T2), -a(2, 0), np.zeros((1, 8*4))], # a2
+        [np.zeros((1, 8)), a(3, T2), -a(3, 0), np.zeros((1, 8*4))], # j2
+        [np.zeros((1, 8)), a(4, T2), -a(4, 0), np.zeros((1, 8*4))], # s2
+        [np.zeros((1, 8*2)), a(1, T3), -a(1, 0), np.zeros((1, 8*3))], # v3
+        [np.zeros((1, 8*2)), a(2, T3), -a(2, 0), np.zeros((1, 8*3))], # a3
+        [np.zeros((1, 8*2)), a(3, T3), -a(3, 0), np.zeros((1, 8*3))], # j3
+        [np.zeros((1, 8*2)), a(4, T3), -a(4, 0), np.zeros((1, 8*3))], # s3
+        [np.zeros((1, 8*3)), a(1, T4), -a(1, 0), np.zeros((1, 8*2))], # v4
+        [np.zeros((1, 8*3)), a(2, T4), -a(2, 0), np.zeros((1, 8*2))], # a4
+        [np.zeros((1, 8*3)), a(3, T4), -a(3, 0), np.zeros((1, 8*2))], # j4
+        [np.zeros((1, 8*3)), a(4, T4), -a(4, 0), np.zeros((1, 8*2))], # s4
+        [np.zeros((1, 8*4)), a(1, T5), -a(1, 0), np.zeros((1, 8*1))], # v5
+        [np.zeros((1, 8*4)), a(2, T5), -a(2, 0), np.zeros((1, 8*1))], # a5
+        [np.zeros((1, 8*4)), a(3, T5), -a(3, 0), np.zeros((1, 8*1))], # j5
+        [np.zeros((1, 8*4)), a(4, T5), -a(4, 0), np.zeros((1, 8*1))], # s5
+        [np.zeros((1, 8*5)), a(1, T6), -a(1, 0)], # v6
+        [np.zeros((1, 8*5)), a(2, T6), -a(2, 0)], # a6
+        [np.zeros((1, 8*5)), a(3, T6), -a(3, 0)], # j6
+        [np.zeros((1, 8*5)), a(4, T6), -a(4, 0)], # s6
+        [a(1,0), np.zeros((1, 8*6))], # v0
+        [a(2,0), np.zeros((1, 8*6))], # a0
+        [a(1,T1), np.zeros((1, 8*6))], # v1
+        [a(2,T1), np.zeros((1, 8*6))], # a1
+        [np.zeros((1, 8)), a(1,T2), np.zeros((1, 8*5))], # v2
+        [np.zeros((1, 8)), a(2,T2), np.zeros((1, 8*5))], # a2
+        [np.zeros((1, 8*2)), a(1,T3), np.zeros((1, 8*4))], # v3
+        [np.zeros((1, 8*2)), a(2,T3), np.zeros((1, 8*4))], # a3
+        [np.zeros((1, 8*3)), a(1,T4), np.zeros((1, 8*3))], # v4
+        [np.zeros((1, 8*3)), a(2,T4), np.zeros((1, 8*3))], # a4
+        [np.zeros((1, 8*4)), a(1,T5), np.zeros((1, 8*2))], # v5
+        [np.zeros((1, 8*4)), a(2,T5), np.zeros((1, 8*2))], # a5
+        [np.zeros((1, 8*5)), a(1,T6), np.zeros((1, 8*1))], # v6
+        [np.zeros((1, 8*5)), a(2,T6), np.zeros((1, 8*1))], # a6
+        [np.zeros((1, 8*6)), a(1,T7)], # v7
+        [np.zeros((1, 8*6)), a(2,T7)], # a7
+    ])
 
-    # start time
-    start_time = time.time()
+    # Compute the inverse of A
+    A_inv = np.linalg.inv(A)
 
-    # calculate distances and times for each segment based on average velocity
-    distances = [np.linalg.norm(waypoints[i+1] - waypoints[i]) for i in range(len(waypoints)-1)]
-    Ts_initial = [d / v_avg for d in distances]
+    R = A_inv.T @ Q_total @ A_inv
 
-    # total_time = 20
-    # # Load optimized time parameters from file
-    # with open('data/optimized_time_parameters.json', 'r') as f:
-    #     time_data = json.load(f)
-    # Ts_initial = np.array(time_data['time_proportions']) * total_time
+    n_f = df.shape[0]
+    n_p = 8 * 7 - n_f
+
+    R_FF = R[:n_f, :n_f]
+    R_FP = R[:n_f, n_f:n_f+n_p]
+    R_PF = R[n_f:n_f+n_p, :n_f]
+    R_PP = R[n_f:n_f+n_p, n_f:n_f+n_p]
+
+    dp_star = -np.linalg.inv(R_PP) @ R_FP.T @ df
+
+    d = np.vstack([df, dp_star])
+    p = A_inv @ d
+
+    if save:
+        # Extract coefficients for each polynomial segment (x, y, z coordinates)
+        p_coeffs = [p[i*8:(i+1)*8, :] for i in range(7)]
+        import os
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        import json
+        coefficients = {}
+        for i, coeff in enumerate(p_coeffs):
+            coefficients[f"p{i+1}_coeffs"] = {
+                "x": coeff[:, 0].tolist(),
+                "y": coeff[:, 1].tolist(),
+                "z": coeff[:, 2].tolist()
+            }
+        with open('data/polynomial_coefficients_min_snap.json', 'w') as f:
+            json.dump(coefficients, f, indent=2)
+
+    return p
+
+def calc_coefficients(waypoints, times):
+    """
+    Calculate polynomial coefficients dynamically for a minimum snap trajectory.
+    """
+    s = 8  # number of polynomial coefficients
+
+    # Ensure waypoints is a numpy array
+    waypoints = np.array(waypoints)
+
+    n = len(times)  # Number of segments
+    # times = calc_time(waypoints)
+
+    Q = calc_Q(times)
     
-    # Option to skip gradient descent
-    use_gradient_descent = True  # Set to False to skip optimization
-    
-    if use_gradient_descent:
-        # Run optimization
-        results = optimize_times_gradient_descent(Ts_initial, kT, alpha, max_iterations=ITER, tolerance=TOL)
-        
-        # Save optimized coefficients and time parameters
-        # print("\nSaving optimized coefficients and time parameters...")
-        coefficients = get_coefficients(results['Ts_optimized'])
-        save_optimization_results(results, coefficients)
+    # construct an empty block matrix for the constraints
+    df = np.zeros((5*n+3, 3)) # 
 
-        # Plot optimization history
-        plot_optimization_history(results)
-    else:
-        # Use initial time parameters directly
-        print("Skipping gradient descent optimization...")
-        print(f"Using initial time parameters: {Ts_initial}")
-        
-        # Calculate cost for initial parameters
-        initial_cost = J(Ts_initial, kT)
-        total_time = np.sum(Ts_initial)
-        time_proportions = np.array(Ts_initial) / total_time
-        
-        # Create results dictionary for consistency
-        results = {
-            'Ts_optimized': np.array(Ts_initial),
-            'final_cost': initial_cost,
-            'total_time': total_time,
-            'time_proportions': time_proportions,
-            'Ts_history': np.array([Ts_initial]),
-            'cost_history': [initial_cost],
-            'optimization_time_seconds': 0.0,
-            'iterations': 0,
-            'converged': True
-        }
-        
-        # Save coefficients and time parameters
-        print("\nSaving coefficients and time parameters...")
-        coefficients = get_coefficients(Ts_initial)
-        save_optimization_results(results, coefficients)
-        
-        print(f"Total time: {total_time:.2f} seconds")
-        print(f"Initial cost: {initial_cost:.6f}")
-        print("Time proportions:")
-        for i, (T, prop) in enumerate(zip(Ts_initial, time_proportions)):
-            print(f"  Segment {i+1}: {T:.2f}s ({prop:.1%})")
+    for i in range(n):
+        df[2*i, :] = waypoints[i]  # Start point of segment i
+        df[2*i+1, :] = waypoints[i+1]  # End point of segment i
+
+    A = calc_A(times)
+
+    # Compute the inverse of A
+    A_inv = np.linalg.inv(A)
+
+    R = A_inv.T @ Q @ A_inv
+
+    # Partition R based on the sizes of df and dp
+    n_f = df.shape[0]  # number of fixed variables
+    n_p = s * n - n_f  # number of free variables
+
+    R_FF = R[:n_f, :n_f]
+    R_FP = R[:n_f, n_f:n_f+n_p]
+    R_PF = R[n_f:n_f+n_p, :n_f]
+    R_PP = R[n_f:n_f+n_p, n_f:n_f+n_p]
+
+    dp_star = -np.linalg.inv(R_PP) @ R_FP.T @ df
+
+    # Assemble the complete solution vector d from df and dp_star
+    d = np.vstack([df, dp_star])
+
+    p = A_inv @ d
+
+    return p
+
+# construct A matrix for min-snap
+def calc_A(times):
+    """
+    Construct the constraint matrix A for minimum snap trajectory.
+    Args:
+        times: list or array of segment times (N-1)
+    Returns:
+        A: constraint matrix (shape: (5*n+3+3*(n-1), s*n, where s=8, n=#segments))
+    """
+    s = 8
+    n = len(times) 
+    A = np.zeros((5*n+3+3*(n-1), s*n))
+    # position constraints
+    for i in range(n):
+        t_left = 0
+        t_right = times[i] 
+        A[2*i, i*s:(i+1)*s] = a(0, t_left)  # Start of segment i
+        A[2*i+1, i*s:(i+1)*s] = a(0, t_right)  # End of segment i
+
+    # hovering at 1st and last segment
+    for i in range(3):
+        A[2*n+i, 0:s] = a(i+1, 0)
+        A[2*n+3+i, (n-1)*s:n*s] = a(i+1, times[-1])
+
+    # continuity constraints for velocity, acceleration, jerk at intermediate waypoints
+    for i in range(n-1):
+        A[2*n+6+3*i, i*s:(i+1)*s] = a(1, times[i])  # Velocity continuity from the left
+        A[2*n+6+3*i, (i+1)*s:(i+2)*s] = -a(1, 0) # Velocity continuity from the right
+        A[2*n+6+3*i+1, i*s:(i+1)*s] = a(2, times[i])
+        A[2*n+6+3*i+1, (i+1)*s:(i+2)*s] = -a(2, 0)
+        A[2*n+6+3*i+2, i*s:(i+1)*s] = a(3, times[i])
+        A[2*n+6+3*i+2, (i+1)*s:(i+2)*s] = -a(3, 0)
+
+    # the rest are free variables 
+    # there are 3 * (n-1)
+    for i in range(n-1):
+        A[5*n+3+3*i, i*s:(i+1)*s] = a(1, times[i])
+        A[5*n+3+3*i+1, i*s:(i+1)*s] = a(2, times[i])
+        A[5*n+3+3*i+2, i*s:(i+1)*s] = a(3, times[i])    
+    return A
+
+# Construct the block-diagonal Q matrix for min-snap
+def calc_Q(times):
+    s = 8
+    n = len(times)
+    Q = np.zeros((s * n, s * n))
+    for i in range(n):
+        T = times[i]
+        Q_i = Q_snap(T)
+        Q[i*s:(i+1)*s, i*s:(i+1)*s] = Q_i
+    return Q
+
+def calc_cost(waypoints, times, kT):
+    p = calc_coefficients(waypoints, times)
+    # Calculate the cost J
+    J = 0.0
+    for i in range(len(times)):
+        T = times[i]
+        Q_i = Q_snap(T)
+        p_i = p[i*8:(i+1)*8, :]
+        J += (p_i[:, 0].T @ Q_i @ p_i[:, 0] + 
+              p_i[:, 1].T @ Q_i @ p_i[:, 1] + 
+              p_i[:, 2].T @ Q_i @ p_i[:, 2])
+    J += kT * np.sum(times)  # Add time penalty
+    return p, J
+
+def grad_Q(T):
+
+    gradQ = np.zeros((8, 8))
+    for i in range(4,8):
+        for j in range(4,8):
+            gradQ[i,j] = beta(i) * beta(j) * T**(i+j-8)
+
+    return gradQ
+
+def min_snap_gd(waypoints, times, kT, alpha=1e-10, ITER = 1000, TOL=1e-3):
+    n = len(times)
+    p_old, J_old = calc_cost(waypoints, times, kT)
+    print(f"Initial cost: {J_old:.6f}, Initial times: {times}")
+    for i in range(ITER):
+        for j in range(n):
+            T = times[j]
+            gradQ = grad_Q(T)
+            p_j = p_old[j*8:(j+1)*8, :]
+            grad_J = (p_j[:, 0].T @ gradQ @ p_j[:, 0] + 
+                      p_j[:, 1].T @ gradQ @ p_j[:, 1] + 
+                      p_j[:, 2].T @ gradQ @ p_j[:, 2])
+            # print(f"Gradient for segment {j+1}: {grad_J:.6f}")
+            # print(alpha * (grad_J + kT))
+            times[j] -= alpha * (grad_J + kT)
+            # print(f"Updated time for segment {j+1}: {times[j]:.6f}")
+            times[j] = max(0.1, times[j])  # Ensure non-negative
+
+        p_new, J_new = calc_cost(waypoints, times, kT)
+        print(f"Iteration {i}: Cost={J_new:.6f}, Times={times}")
+        # if i % 100 == 0 or i == ITER - 1:
+        #     print(f"Iteration {i}: Cost={J_new:.6f}, Times={times}")
+
+        # Check for convergence
+        if np.abs(J_new - J_old) < TOL:
+            print(f"Converged after {i+1} iterations")
+            break
+
+        p_old, J_old = p_new, J_new
+
+
+    return p_new, times
+
+def get_coeffs_gcopter(waypoints, times):
+    b = create_b(waypoints)
+    M = create_M(times)
+
+    c = solve_banded(())
+
+def create_M(times):
+    n = len(times) # number of segments
+    s = 4
+    # Create a block-diagonal matrix M for the constraints
+    M = np.zeros((2*n*s, 2*n*s))
+    M[:s, :2*s] = create_F0()
+    F = create_F()
+    for i in range(n-1):
+        T = times[i]
+        M[s*(2*i+1):s*(2*i+3), s*(2*i):s*(2*i+2)] = create_E(T)
+        M[s*(2*i+1):s*(2*i+3), s*(2*i+2):s*(2*i+4)] = F
+    M[s*(2*n-1):, s*(2*n-2):] = create_Em(times[-1])
+    
+    return M
+
+def create_Em(T):
+    s = 4
+    Em = np.zeros((s, 2*s))
+    for i in range(s):
+        Em[i,:] = a(i, T)
+
+    return Em
+
+def create_F0():
+    return create_Em(0)
+
+def create_F():
+    s = 4
+    F = np.zeros((2*s, 2*s))
+    for i in range(2*s-1):
+        F[i+1,:] = -a(i, 0)
+
+    return F
+
+def create_E(T):
+    s = 4
+    E = np.zeros((2*s, 2*s))
+
+    E[0,:] = a(0, T)
+    for i in range(2*s-1):
+        E[i+1,:] = a(i, T)
+
+    return E
+
+def create_b(waypoints):
+    n = len(waypoints) - 1  # number of segments
+    s = 4
+    b = np.zeros((2*n*s, 3))
+    b[0,:] = waypoints[0]  # Start point of the first segment
+    b[-4,:] = waypoints[-1]  # End point of the last segment
+    for i in range(n-1):
+        b[s*(2*i+1),:] = waypoints[i+1]  # Intermediate waypoints
+    return b
+
+def solve_c(M, b):
+    """
+    Solve the linear system M * x = b using a banded solver.
+    Args:
+        M: Coefficient matrix (banded form)
+        b: Right-hand side vector
+    Returns:
+        x: Solution vector
+    """
+    # Convert M to banded form if necessary
+    l = 5  # number of lower diagonals
+    u = 3  # number of upper diagonals
+    # Convert M to banded form (shape: (l+u+1, M.shape[1]))
+    M_banded = np.zeros((l+u+1, M.shape[1]))
+    for i in range(M.shape[0]):
+        for j in range(M.shape[1]):
+            band_row = u + i - j
+            if 0 <= band_row < l+u+1:
+                M_banded[band_row, j] = M[i, j]
+    c = solve_banded((l, u), M_banded, b)
+
+    return c
+
+def save_coeffs(c):
+    # save coefficients to a file
+    np.savetxt("data/coeffs.txt", c)
+
+def save_time(times):
+    # save times to a file
+    with open("data/times.txt", "w") as f:
+        for t in times:
+            f.write(f"{t}\n")
+
+if __name__ == "__main__":
+
+    times = calc_time(waypoint_list)
+    c = solve_c(create_M(times), create_b(waypoint_list))   
+
+    save_coeffs(c)
+    save_time(times)

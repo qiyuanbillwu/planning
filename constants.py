@@ -23,3 +23,9 @@ Cl = 0.1    # lift coefficent of propellers  [PLACEHOLDER]
 # make sure this is agreement with the allocation matrix
 J = np.diag([0.00225577, 0.00360365, 0.00181890]) # [kg/m2]
 d = Cd / Cl
+
+# maximum and average velocity/acceleration
+v_avg = 1.0  # Average velocity (m/s)
+a_avg = 3.0  # Average acceleration (m/s²)
+v_max = 5.0  # Maximum velocity (m/s)
+a_max = 5.0  # Maximum acceleration (m/s²)  

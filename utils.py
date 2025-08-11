@@ -21,8 +21,12 @@ def a(n, t):
         return np.array([[0, 0, 0, 6, 24*t, 60*t**2, 120*t**3, 210*t**4]])
     elif n == 4: # snap
         return np.array([[0, 0, 0, 0, 24, 120*t, 360*t**2, 840*t**3]])
+    elif n == 5: # crackle
+        return np.array([[0, 0, 0, 0, 0, 120, 720*t, 2520*t**2]])
+    elif n == 6: # pop
+        return np.array([[0, 0, 0, 0, 0, 0, 720, 5040*t]])
     else:
-        raise ValueError("n must be between 0 and 4 inclusive")
+        raise ValueError("n must be between 0 and 6 inclusive")
 
 # New utility function for 5th order (min-jerk) polynomial
 # This is for minimum jerk trajectory generation, with 6 coefficients: [t^0, t^1, ..., t^5]
@@ -64,6 +68,14 @@ def Q_snap(T):
         for j in range(4, 8):
             Q_mat[i, j] = beta(i) * beta(j) * T**(i + j - 7) / (i + j - 7)
     return Q_mat
+
+def D_snap(T):
+
+    D_mat = np.zeros((4, 4))
+    for i in range(4):
+        for j in range(4):
+            D_mat[i, j] = beta(i + 4) * beta(j + 4) * T**(i + j - 4) / (i + j - 4)
+    return D_mat
 
 # New cost matrix for 5th order (min-jerk) polynomial
 # This is for minimum jerk trajectory generation, integrating the square of the 3rd derivative (jerk)

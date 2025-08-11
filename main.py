@@ -5,17 +5,6 @@ from utils import evaluate_velocity, plot_velocities, get_velocities, plot_accel
 import json
 import time
 
-# Extract 8 waypoints from waypoints.txt
-r0 = np.array([18.2908, -12.9164, 0.5])
-r1 = np.array([16.0048, -6.01777, 0.746351])
-r2 = np.array([9.74278, -4.28989, 3.58934])
-r3 = np.array([2.32316, -1.06404, 1.57101])
-r4 = np.array([-2.50561, 5.7747, 1.74195])
-r5 = np.array([-5.96077, 10.9205, 1.32572])
-r6 = np.array([-16.5275, 15.9659, 1.26184])
-r7 = np.array([-19.8453, 12.2357, 0.5])
-waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
-
 # set average and maximum velocity/acceleration
 v_max = 5.0
 v_avg = 3.0
