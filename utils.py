@@ -25,8 +25,10 @@ def a(n, t):
         return np.array([[0, 0, 0, 0, 0, 120, 720*t, 2520*t**2]])
     elif n == 6: # pop
         return np.array([[0, 0, 0, 0, 0, 0, 720, 5040*t]])
+    elif n == 7: # fizz
+        return np.array([[0, 0, 0, 0, 0, 0, 0, 5040]])
     else:
-        raise ValueError("n must be between 0 and 6 inclusive")
+        raise ValueError("n must be between 0 and 7 inclusive")
 
 # New utility function for 5th order (min-jerk) polynomial
 # This is for minimum jerk trajectory generation, with 6 coefficients: [t^0, t^1, ..., t^5]
@@ -843,3 +845,16 @@ def print_trajectory_info(coeffs, Ts, total_time, points_per_segment=200, order=
     print(f"Motor 2 force range: [{np.min(f2):.3f}, {np.max(f2):.3f}] N")
     print(f"Motor 3 force range: [{np.min(f3):.3f}, {np.max(f3):.3f}] N")
     print(f"Motor 4 force range: [{np.min(f4):.3f}, {np.max(f4):.3f}] N")
+
+def load_coeffs_txt(filename):
+    # Assumes each line: coeff_1, coeff_2, ..., coeff_n
+    coeffs = []
+    with open(filename, 'r') as f:
+        for line in f:
+            coeffs.append([float(x) for x in line.strip().split()])
+    return np.array(coeffs)  # shape: (segments * coeffs, 3) or (segments, coeffs, 3)
+
+def load_times_txt(filename):
+    with open(filename, 'r') as f:
+        times = [float(x) for x in f.read().strip().split()]
+    return np.array(times)

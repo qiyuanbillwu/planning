@@ -1,20 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
-
-def load_coeffs_txt(filename):
-    # Assumes each line: coeff_1, coeff_2, ..., coeff_n
-    coeffs = []
-    with open(filename, 'r') as f:
-        for line in f:
-            coeffs.append([float(x) for x in line.strip().split()])
-    return np.array(coeffs)  # shape: (segments * coeffs, 3) or (segments, coeffs, 3)
-
-def load_times_txt(filename):
-    with open(filename, 'r') as f:
-        times = [float(x) for x in f.read().strip().split()]
-    return np.array(times)
-    return np.array(times)
+from utils import get_positions, load_coeffs_txt, load_times_txt
 
 def eval_poly(coeffs, t, order=7):
     # coeffs: shape (8, 3) for one segment, t: scalar or array

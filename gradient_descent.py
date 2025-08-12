@@ -1,7 +1,7 @@
 from webbrowser import get
 from utils import a, a5, Q_snap, Q_jerk, beta
 from scipy.linalg import solve_banded
-
+from linear_algebra import *
 import constants
 import numpy as np
 import matplotlib.pyplot as plt
@@ -716,58 +716,6 @@ def calc_coefficients(waypoints, times):
 
     return p
 
-# construct A matrix for min-snap
-def calc_A(times):
-    """
-    Construct the constraint matrix A for minimum snap trajectory.
-    Args:
-        times: list or array of segment times (N-1)
-    Returns:
-        A: constraint matrix (shape: (5*n+3+3*(n-1), s*n, where s=8, n=#segments))
-    """
-    s = 8
-    n = len(times) 
-    A = np.zeros((5*n+3+3*(n-1), s*n))
-    # position constraints
-    for i in range(n):
-        t_left = 0
-        t_right = times[i] 
-        A[2*i, i*s:(i+1)*s] = a(0, t_left)  # Start of segment i
-        A[2*i+1, i*s:(i+1)*s] = a(0, t_right)  # End of segment i
-
-    # hovering at 1st and last segment
-    for i in range(3):
-        A[2*n+i, 0:s] = a(i+1, 0)
-        A[2*n+3+i, (n-1)*s:n*s] = a(i+1, times[-1])
-
-    # continuity constraints for velocity, acceleration, jerk at intermediate waypoints
-    for i in range(n-1):
-        A[2*n+6+3*i, i*s:(i+1)*s] = a(1, times[i])  # Velocity continuity from the left
-        A[2*n+6+3*i, (i+1)*s:(i+2)*s] = -a(1, 0) # Velocity continuity from the right
-        A[2*n+6+3*i+1, i*s:(i+1)*s] = a(2, times[i])
-        A[2*n+6+3*i+1, (i+1)*s:(i+2)*s] = -a(2, 0)
-        A[2*n+6+3*i+2, i*s:(i+1)*s] = a(3, times[i])
-        A[2*n+6+3*i+2, (i+1)*s:(i+2)*s] = -a(3, 0)
-
-    # the rest are free variables 
-    # there are 3 * (n-1)
-    for i in range(n-1):
-        A[5*n+3+3*i, i*s:(i+1)*s] = a(1, times[i])
-        A[5*n+3+3*i+1, i*s:(i+1)*s] = a(2, times[i])
-        A[5*n+3+3*i+2, i*s:(i+1)*s] = a(3, times[i])    
-    return A
-
-# Construct the block-diagonal Q matrix for min-snap
-def calc_Q(times):
-    s = 8
-    n = len(times)
-    Q = np.zeros((s * n, s * n))
-    for i in range(n):
-        T = times[i]
-        Q_i = Q_snap(T)
-        Q[i*s:(i+1)*s, i*s:(i+1)*s] = Q_i
-    return Q
-
 def calc_cost(waypoints, times, kT):
     p = calc_coefficients(waypoints, times)
     # Calculate the cost J
@@ -781,15 +729,6 @@ def calc_cost(waypoints, times, kT):
               p_i[:, 2].T @ Q_i @ p_i[:, 2])
     J += kT * np.sum(times)  # Add time penalty
     return p, J
-
-def grad_Q(T):
-
-    gradQ = np.zeros((8, 8))
-    for i in range(4,8):
-        for j in range(4,8):
-            gradQ[i,j] = beta(i) * beta(j) * T**(i+j-8)
-
-    return gradQ
 
 def min_snap_gd(waypoints, times, kT, alpha=1e-10, ITER = 1000, TOL=1e-3):
     n = len(times)
@@ -828,84 +767,62 @@ def get_coeffs_gcopter(waypoints, times):
     b = create_b(waypoints)
     M = create_M(times)
 
-    c = solve_banded(())
+    c = solve_c(M, b)
 
-def create_M(times):
-    n = len(times) # number of segments
+    return c, M
+
+def gd_gcopter(waypoints, kT, alpha=1e-10, ITER=1000, TOL=1e-3):
+    times = calc_time(waypoints)
+    times_old = times.copy()
+    # times = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])  # Initial guess for times
+    # print(f"Initial times: {times}")
+    # print(times_old)
+    n = len(times)
+    c,  M = get_coeffs_gcopter(waypoints, times)
+    # save M.T
+    np.savetxt("data/M.csv", M.T, delimiter=",")
+    dKdc = calc_dKdc_2(c, times)
+    G = calc_G(M, dKdc)
     s = 4
-    # Create a block-diagonal matrix M for the constraints
-    M = np.zeros((2*n*s, 2*n*s))
-    M[:s, :2*s] = create_F0()
-    F = create_F()
-    for i in range(n-1):
-        T = times[i]
-        M[s*(2*i+1):s*(2*i+3), s*(2*i):s*(2*i+2)] = create_E(T)
-        M[s*(2*i+1):s*(2*i+3), s*(2*i+2):s*(2*i+4)] = F
-    M[s*(2*n-1):, s*(2*n-2):] = create_Em(times[-1])
     
-    return M
+    # Perform gradient descent to optimize the times
+    for i in range(ITER):
+        for j in range(0, n-1):
+            coeffs = c[j*(2*s):(j+1)*(2*s), :]
+            T = times[j]
+            Gj = G[s*(2*j+1):s*(2*j+3), :]
+            dEdT = create_dEdT(T)
+            times[j] -= alpha * calc_dWdT_2(coeffs, T, kT, Gj, dEdT)
 
-def create_Em(T):
-    s = 4
-    Em = np.zeros((s, 2*s))
-    for i in range(s):
-        Em[i,:] = a(i, T)
+        j = n-1
+        coeffs = c[j*(2*s):(j+1)*(2*s), :]
+        T = times[j]
+        Gj = G[-s:, :]
+        dEmdT = create_dEmdT(T)
+        times[j] -= alpha * calc_dWdT_2(coeffs, T, kT, Gj, dEmdT)
 
-    return Em
+        times = np.maximum(0.1, times)  # Ensure non-negative times
+        DISPLAY = False
+        if DISPLAY == True:
+            # skip every 20 iteration
+            if i % 20 == 0 or i == ITER - 1:
+                print(f"Iteration {i}: Times={times}")
+                # print absolute difference between times and times_old
+                print(f"Times change: {np.linalg.norm(np.abs(times - times_old)):.6f}")
+                p, cost = calc_cost(waypoints, times, kT) 
+                print(f"Cost={cost:.6f}")
+        if np.linalg.norm(np.abs(times - times_old)) < TOL:
+            # print(f"Converged after {i+1} iterations")
+            break
+        times_old = times.copy()
+        
+        # p, j = calc_cost(waypoints, times, kT)
+        # print(f"Cost after iteration {i}: {j:.6f}")
+        c,  M = get_coeffs_gcopter(waypoints, times)
+        dKdc = calc_dKdc_2(c, times)
+        G = calc_G(M, dKdc)
 
-def create_F0():
-    return create_Em(0)
-
-def create_F():
-    s = 4
-    F = np.zeros((2*s, 2*s))
-    for i in range(2*s-1):
-        F[i+1,:] = -a(i, 0)
-
-    return F
-
-def create_E(T):
-    s = 4
-    E = np.zeros((2*s, 2*s))
-
-    E[0,:] = a(0, T)
-    for i in range(2*s-1):
-        E[i+1,:] = a(i, T)
-
-    return E
-
-def create_b(waypoints):
-    n = len(waypoints) - 1  # number of segments
-    s = 4
-    b = np.zeros((2*n*s, 3))
-    b[0,:] = waypoints[0]  # Start point of the first segment
-    b[-4,:] = waypoints[-1]  # End point of the last segment
-    for i in range(n-1):
-        b[s*(2*i+1),:] = waypoints[i+1]  # Intermediate waypoints
-    return b
-
-def solve_c(M, b):
-    """
-    Solve the linear system M * x = b using a banded solver.
-    Args:
-        M: Coefficient matrix (banded form)
-        b: Right-hand side vector
-    Returns:
-        x: Solution vector
-    """
-    # Convert M to banded form if necessary
-    l = 5  # number of lower diagonals
-    u = 3  # number of upper diagonals
-    # Convert M to banded form (shape: (l+u+1, M.shape[1]))
-    M_banded = np.zeros((l+u+1, M.shape[1]))
-    for i in range(M.shape[0]):
-        for j in range(M.shape[1]):
-            band_row = u + i - j
-            if 0 <= band_row < l+u+1:
-                M_banded[band_row, j] = M[i, j]
-    c = solve_banded((l, u), M_banded, b)
-
-    return c
+    return c, times
 
 def save_coeffs(c):
     # save coefficients to a file
@@ -918,9 +835,17 @@ def save_time(times):
             f.write(f"{t}\n")
 
 if __name__ == "__main__":
+    N = 10  # Number of repetitions for averaging
+    times_list = []
 
-    times = calc_time(waypoint_list)
-    c = solve_c(create_M(times), create_b(waypoint_list))   
+    for _ in range(N):
+        start = time.time()
+        c, times = gd_gcopter(waypoint_list, 100, alpha=1e-4, ITER=1000, TOL=1e-2)
+        end = time.time()
+        times_list.append(end - start)
+
+    avg_time = np.mean(times_list)
+    print(f"Average gd_gcopter execution time over {N} runs: {avg_time:.6f} seconds")
 
     save_coeffs(c)
     save_time(times)
