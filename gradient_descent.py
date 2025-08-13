@@ -792,14 +792,14 @@ def gd_gcopter(waypoints, kT, alpha=1e-10, ITER=1000, TOL=1e-3):
             T = times[j]
             Gj = G[s*(2*j+1):s*(2*j+3), :]
             dEdT = create_dEdT(T)
-            times[j] -= alpha * calc_dWdT_2(coeffs, T, kT, Gj, dEdT)
+            times[j] -= alpha * calc_dWdT(coeffs, T, kT, Gj, dEdT)
 
         j = n-1
         coeffs = c[j*(2*s):(j+1)*(2*s), :]
         T = times[j]
         Gj = G[-s:, :]
         dEmdT = create_dEmdT(T)
-        times[j] -= alpha * calc_dWdT_2(coeffs, T, kT, Gj, dEmdT)
+        times[j] -= alpha * calc_dWdT(coeffs, T, kT, Gj, dEmdT)
 
         times = np.maximum(0.1, times)  # Ensure non-negative times
         DISPLAY = False

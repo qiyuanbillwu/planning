@@ -214,14 +214,7 @@ def calc_G(M, dKdc, l = 5, u = 3):
     A = to_banded(M.T, u, l)
     return solve_banded((u, l), A, dKdc)
 
-def calc_dWdT_1(c, T, kT, M, Q):
-    dKdT = calc_dKdT(c, T, kT)
-    dKdc = calc_dKdc_1(c, Q)
-    G = calc_G(M, dKdc)
-    dWdT = dKdT - np.trace(G.T @ calc_dEdT(T) @ c)
-    return dWdT
-
-def calc_dWdT_2(c, T, kT, G_partition, dEdT):
+def calc_dWdT(c, T, kT, G_partition, dEdT):
     dKdT = calc_dKdT(c, T, kT)
     dWdT = dKdT - np.trace(G_partition.T @ dEdT @ c)
     return dWdT

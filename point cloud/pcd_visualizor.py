@@ -4,12 +4,11 @@ import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import json
 
 # Add parent directory to sys.path so utils can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from utils import get_positions  # Now this should work
+from plotting import get_trajectory, plot_traj
+from utils import load_coeffs_txt, load_times_txt
 from waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
 
 # Load the PCD file
@@ -20,18 +19,16 @@ print("Point cloud loaded successfully.")
 # Convert the point cloud to a NumPy array
 points = np.asarray(pcd.points)
 
-# --- Load trajectory coefficients and time parameters ---
-with open("/Users/wuqiyuan/Library/Mobile Documents/com~apple~CloudDocs/Desktop/UCLA/research/vectr/richter planning/data/polynomial_coefficients.json", "r") as f:
-    coeffs = json.load(f)
-with open("/Users/wuqiyuan/Library/Mobile Documents/com~apple~CloudDocs/Desktop/UCLA/research/vectr/richter planning/data/optimized_time_parameters.json", "r") as f:
-    time_params = json.load(f)
-Ts = np.array(time_params["optimized_times"])
+# --- Load trajectory coefficients and time parameters ---    
+coeffs = load_coeffs_txt('data/coeffs.txt')
+Ts = load_times_txt('data/times.txt')
+# Ts = np.array(time_params["optimized_times"])
 segment_times = np.cumsum([0] + list(Ts))
 
 waypoints = np.array(waypoints)
 
-# --- Get trajectory points using utils.get_positions ---
-t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, order=7)
+# --- Get trajectory points ---
+t_traj, x_traj, y_traj, z_traj = get_trajectory(coeffs, Ts, order=7)
 
 # --- Plot 3D point cloud with trajectory and waypoints ---
 fig = plt.figure(figsize=(10, 10))
