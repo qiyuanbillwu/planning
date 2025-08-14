@@ -139,7 +139,7 @@ def plot_snap(coeffs, times, s=4, points_per_seg=100):
     ax.legend()
     plt.tight_layout()
 
-def get_trajectory(coeffs, times, order=7, points_per_seg=100):
+def get_trajectory(coeffs, times, points_per_seg=100):
     n_seg = len(times)
     x_traj, y_traj, z_traj = [], [], []
     t_traj = []
@@ -166,5 +166,6 @@ def plot_traj(x_traj, y_traj, z_traj, waypoints):
     ax.set_zlabel('Z')
     ax.set_title('3D Trajectory from coeffs.txt and times.txt')
     ax.legend()
-    ax.grid(True)
+    # ax.grid(True)
+    # ax.set_box_aspect([1, 1, 1])  # Equal aspect ratio
     plt.tight_layout()

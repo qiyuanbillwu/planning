@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
 from utils import load_coeffs_txt, load_times_txt

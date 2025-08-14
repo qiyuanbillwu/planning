@@ -858,3 +858,13 @@ def load_times_txt(filename):
     with open(filename, 'r') as f:
         times = [float(x) for x in f.read().strip().split()]
     return np.array(times)
+
+def save_coeffs(c):
+    # save coefficients to a file
+    np.savetxt("data/coeffs.txt", c)
+
+def save_time(times):
+    # save times to a file
+    with open("data/times.txt", "w") as f:
+        for t in times:
+            f.write(f"{t}\n")

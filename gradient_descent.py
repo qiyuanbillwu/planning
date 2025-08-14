@@ -1,5 +1,5 @@
 from webbrowser import get
-from utils import a, a5, Q_snap, Q_jerk, beta
+from utils import a, a5, Q_snap, Q_jerk, save_coeffs, save_time
 from scipy.linalg import solve_banded
 from linear_algebra import *
 import constants
@@ -802,7 +802,7 @@ def gd_gcopter(waypoints, kT, alpha=1e-10, ITER=1000, TOL=1e-3):
         times[j] -= alpha * calc_dWdT(coeffs, T, kT, Gj, dEmdT)
 
         times = np.maximum(0.1, times)  # Ensure non-negative times
-        DISPLAY = False
+        DISPLAY = True
         if DISPLAY == True:
             # skip every 20 iteration
             if i % 20 == 0 or i == ITER - 1:
@@ -824,23 +824,17 @@ def gd_gcopter(waypoints, kT, alpha=1e-10, ITER=1000, TOL=1e-3):
 
     return c, times
 
-def save_coeffs(c):
-    # save coefficients to a file
-    np.savetxt("data/coeffs.txt", c)
-
-def save_time(times):
-    # save times to a file
-    with open("data/times.txt", "w") as f:
-        for t in times:
-            f.write(f"{t}\n")
-
 if __name__ == "__main__":
-    N = 10  # Number of repetitions for averaging
+    N = 1  # Number of repetitions for averaging
     times_list = []
+    kT = 1e4
+
+    # general rule of thumb
+    # kT * alpha = 1e-2
 
     for _ in range(N):
         start = time.time()
-        c, times = gd_gcopter(waypoint_list, 100, alpha=1e-4, ITER=1000, TOL=1e-2)
+        c, times = gd_gcopter(waypoint_list, kT, alpha=1e-6, ITER=1000, TOL=1e-3)
         end = time.time()
         times_list.append(end - start)
 
