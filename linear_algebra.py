@@ -78,6 +78,25 @@ def create_b(waypoints):
         b[s*(2*i+1),:] = waypoints[i+1]  # Intermediate waypoints
     return b
 
+def create_b_with_bc(waypoints, v0, a0, j0, vf, af, jf):
+    n = len(waypoints) - 1  # number of segments
+    s = 4
+    b = np.zeros((2*n*s, 3))
+    b[0,:] = waypoints[0]  # Start point of the first segment
+    b[-4,:] = waypoints[-1]  # End point of the last segment
+    for i in range(n-1):
+        b[s*(2*i+1),:] = waypoints[i+1]  # Intermediate waypoints
+
+    # Boundary conditions
+    b[1,:] = v0
+    b[2,:] = a0
+    b[3,:] = j0
+    b[-3,:] = vf
+    b[-2,:] = af
+    b[-1,:] = jf
+
+    return b
+
 def solve_c(M, b, l = 5, u = 3):
     """
     Solve the linear system M * x = b using a banded solver.

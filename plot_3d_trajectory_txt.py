@@ -10,7 +10,7 @@ if __name__ == "__main__":
     coeffs = load_coeffs_txt('data/coeffs.txt')  # shape: (56, 3) for 7 segments, 8 coeffs each
     times = load_times_txt('data/times.txt')     # shape: (7,)
 
-    t_traj, x_traj, y_traj, z_traj = get_trajectory(coeffs, times, order=7)
+    t_traj, x_traj, y_traj, z_traj = get_trajectory(coeffs, times)
 
     plot_traj(x_traj, y_traj, z_traj, waypoints)
     plt.show()
