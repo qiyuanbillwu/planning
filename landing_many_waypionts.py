@@ -10,6 +10,7 @@ from plotting import *
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from linear_algebra import *
+import time
 
 def r_f(t):
     return np.array([t, np.sin(t), 0])
@@ -42,14 +43,9 @@ v_avg = 10
 tf = (200 + np.sqrt(40000 + 41600*(v_avg**2+1))) / (2 * (v_avg**2 + 1))
 print(f"Initial guess for tf: {tf}")
 
-# rf = r_f(tf)
-# vf = v_f(tf)
-# af = a_f(tf)
-# jf = j_f(tf)
-
-def generate_waypoints(r0, r_f, tf):
-    T_segment = 4 # length of each segment in seconds
-    n = round(tf / T_segment) # number of segments
+# T_length is the length of each segment
+def generate_waypoints(r0, r_f, tf, T_length):
+    n = round(tf / T_length) # number of segments
     # print(f"Number of segments: {n}")
     waypoints = np.zeros((n+1, 3))
     waypoints[0, :] = r0
@@ -72,18 +68,18 @@ def generate_waypoints(r0, r_f, tf):
 # print(M.shape, b.shape)
 # c = solve_c(M, b)
 
-def gradient_descent_tf(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, kT=10, alpha=1e-3, delta=1e-8, TOL=1e-3, ITER=2000):
+def gradient_descent_tf(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length, kT=10, alpha=1e-3, delta=1e-8, TOL=1e-3, ITER=2000):
     """
     Performs gradient descent to optimize tf for minimum cost.
     Returns the optimized tf.
     """
-    coeffs, times = compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f)
+    coeffs, times = compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length)
     J = calc_cost(coeffs, times, kT)
     print(f"Initial cost: {J}, initial tf: {tf}")
     for i in range(ITER):
         J = calc_cost(coeffs, times, kT)
         t_delta = tf + delta
-        coeffs_delta, times_delta = compute_coeffs(t_delta, r0, v0, a0, j0, r_f, v_f, a_f, j_f)
+        coeffs_delta, times_delta = compute_coeffs(t_delta, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length)
         J_delta = calc_cost(coeffs_delta, times_delta, kT)
         gradient = (J_delta - J) / delta
 
@@ -95,13 +91,13 @@ def gradient_descent_tf(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, kT=10, alpha=1e-
 
         tf -= dt
         tf = max(tf, 0.1)
-        coeffs, times = compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f)
+        coeffs, times = compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length)
         if i % 50 == 0:
             print(f"Iteration {i}, time: {tf}, cost: {J}")
     return tf
 
-def compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f):
-    waypoints = generate_waypoints(r0, r_f, tf)
+def compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length):
+    waypoints = generate_waypoints(r0, r_f, tf, T_length)
     b = create_b_with_bc(waypoints, v0, a0, j0, v_f(tf), a_f(tf), j_f(tf))
     n = len(waypoints) - 1  # number of segments
     times = create_times(tf, n)
@@ -115,15 +111,20 @@ def create_times(tf, n):
         times[i] = tf / n
     return times
 
-tf = gradient_descent_tf(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f)
-waypoints = generate_waypoints(r0, r_f, tf)
-c, times = compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f)
+T_length = 10
+# time the gradient descent
+# print("Starting gradient descent for tf...")    
+# start_time = time.time()
+tf = gradient_descent_tf(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length)
+# end_time = time.time()
+# print(f"Optimized tf: {tf}, Time taken: {end_time - start_time:.2f} seconds")
+waypoints = generate_waypoints(r0, r_f, tf, T_length)
+c, times = compute_coeffs(tf, r0, v0, a0, j0, r_f, v_f, a_f, j_f, T_length)
 # print(c)
 
 t_traj, x_traj, y_traj, z_traj = get_trajectory(c, times)
 
 plot_traj(x_traj, y_traj, z_traj, waypoints)
-
 
 def get_platform_vertices(center, size=2.0):
     """
@@ -176,7 +177,7 @@ def update(frame):
 
 ani = FuncAnimation(fig, update, frames=len(x_traj), interval=10, blit=True)
 
-ani.save('landing_many_waypoints.mp4')
+# ani.save('landing_many_waypoints.mp4')
 
 # plot_position(c, times)
 # plot_velocity(c, times)
