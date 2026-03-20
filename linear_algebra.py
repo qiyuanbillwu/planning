@@ -240,17 +240,27 @@ def calc_dWdT(c, T, kT, G_partition, dEdT):
 
 if __name__ == "__main__":
     # Example usage
-    times = [1.0, 2.0, 1.5]  # Example segment times
-    waypoints = np.array([[0, 0, 0], [1, 1, 1], [2, 0, 2], [3, 3, 3]])  # Example waypoints
-    M = create_M(times)
-    b = create_b(waypoints)
-    c = solve_c(M, b)
+    # times = [1.0, 2.0, 1.5]  # Example segment times
+    # waypoints = np.array([[0, 0, 0], [1, 1, 1], [2, 0, 2], [3, 3, 3]])  # Example waypoints
+    # M = create_M(times)
+    # b = create_b(waypoints)
+    # c = solve_c(M, b)
 
-    i = 0
-    coeffs = c[i*8:(i+1)*8, :]  # Extract coefficients for segment i
-    T = times[i]  # Current time segment
+    # i = 0
+    # coeffs = c[i*8:(i+1)*8, :]  # Extract coefficients for segment i
+    # T = times[i]  # Current time segment
 
-    print(Q_snap(T).shape)
-    print(coeffs.shape)
+    # print(Q_snap(T).shape)
+    # print(coeffs.shape)
     
-    dKdc = calc_dKdc_2(coeffs, T)
+    # dKdc = calc_dKdc_2(coeffs, T)
+
+    # testing for receding horizon polynomial planning
+    M = create_M([2.0])
+    print(M)
+
+    b = create_b_with_bc(np.array([[0,0,0],[1,1,1]]), np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0]), np.array([1,1,1]), np.array([0,0,0]), np.array([0,0,0]))
+    # print(b)
+
+    c = solve_c(M, b)
+    # print(c)
