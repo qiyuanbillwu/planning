@@ -26,4 +26,4 @@ data/*
 !data/
 !data/waypoints.py
 
-.pdf
+*.pdf
