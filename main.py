@@ -1,9 +1,12 @@
+# minimum jerk waypoint-based trajectory optimization using gradient descent
+
 import numpy as np
 import matplotlib.pyplot as plt
-from gradient_descent import optimize_times_gradient_descent, get_coefficients, save_optimization_results, plot_optimization_history
-from utils import evaluate_velocity, plot_velocities, get_velocities, plot_accelerations, plot_jerks, plot_snaps
+from src.gradient_descent import optimize_times_gradient_descent, get_coefficients, save_optimization_results, plot_optimization_history
+from src.utils import evaluate_velocity, plot_velocities, get_velocities, plot_accelerations, plot_jerks, plot_snaps
 import json
 import time
+from data.waypoints import waypoint_list as waypoints
 
 # set average and maximum velocity/acceleration
 v_max = 5.0
@@ -90,7 +93,5 @@ fig3, ax3, (t_vel, x_vel, y_vel, z_vel) = plot_velocities(coeffs, Ts, segment_ti
 
 # # plot snap
 # fig6, ax6, (t_snap, x_snap, y_snap, z_snap) = plot_snaps(coeffs, Ts, segment_times, order=5)
-
-
 
 plt.show()

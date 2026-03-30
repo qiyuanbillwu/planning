@@ -1,6 +1,3 @@
-
-
-# Extract 8 waypoints from waypoints.txt
 import numpy as np
 
 r0 = np.array([1, 1, 0.5])

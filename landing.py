@@ -1,10 +1,10 @@
 # 2 waypoints landing on a translating and oscillating platform
 
 import numpy as np
-from constants import v_avg
-from utils import a, Q_snap
+from src.constants import v_avg
+from src.utils import a, Q_snap
 from scipy.linalg import solve_triangular
-from plotting import *
+from src.plotting import *
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         platform.set_3d_properties(corners[:, 2])
         return point, platform
 
-    # ani = FuncAnimation(fig, update, frames=len(x_traj), interval=10, blit=True)
+    ani = FuncAnimation(fig, update, frames=len(x_traj), interval=10, blit=True)
 
     # ani.save('landing.mp4')
 

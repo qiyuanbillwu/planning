@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import json
-from utils import get_positions
-from waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
+from src.utils import get_positions
+from data.waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
 
 # r0 = np.array([1.5, -1, 2])
 # r1 = np.array([0.5, -1.2, 2])
@@ -14,6 +14,8 @@ from waypoints import waypoint_list as waypoints  # Assuming waypoints are defin
 # r6 = np.array([1.1, 0.75, 2])
 # r7 = np.array([1.5, -1, 2])
 # waypoints = [r0, r1, r2, r3, r4, r5, r6, r7]
+
+order = 5 # Order of the polynomial (5 for minimum jerk, 7 for minimum snap)
 
 # Load the polynomial coefficients
 with open('data/polynomial_coefficients.json', 'r') as f:
@@ -30,7 +32,7 @@ total_time = np.sum(Ts)
 segment_times = np.cumsum([0] + list(Ts))  # [0, 5, 10, 15, 20, 25, 30, 35]
 
 # Use the get_positions function from utils
-t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, order=7)
+t_traj, x_traj, y_traj, z_traj = get_positions(coeffs, Ts, segment_times, order=order)
 
 # Create 3D plot
 fig = plt.figure(figsize=(12, 8))

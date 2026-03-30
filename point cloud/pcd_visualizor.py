@@ -7,9 +7,9 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # Add parent directory to sys.path so utils can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from plotting import get_trajectory, plot_traj
-from utils import load_coeffs_txt, load_times_txt
-from waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
+from src.plotting import get_trajectory, plot_traj
+from src.utils import load_coeffs_txt, load_times_txt
+from data.waypoints import waypoint_list as waypoints  # Assuming waypoints are defined in a separate file
 
 # Load the PCD file
 pcd = o3d.io.read_point_cloud("/Users/wuqiyuan/Library/Mobile Documents/com~apple~CloudDocs/Desktop/UCLA/research/vectr/richter planning/point cloud/tilted_cylinders.pcd")

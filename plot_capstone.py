@@ -2,7 +2,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-from utils import plot_positions, plot_velocities, plot_accelerations, plot_jerks, plot_snaps, plot_forces
+from src.utils import plot_positions, plot_velocities, plot_accelerations, plot_jerks, plot_snaps, plot_forces
 
 # Load optimized coefficients and time parameters
 with open("data/min_snap_coeffs.json", "r") as f:

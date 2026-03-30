@@ -3,13 +3,13 @@
 
 
 import numpy as np
-from constants import v_avg
-from utils import a, Q_snap
+from src.constants import v_avg
+from src.utils import a, Q_snap
 from scipy.linalg import solve_triangular
-from plotting import *
+from src.plotting import *
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from linear_algebra import *
+from src.linear_algebra import *
 import time
 
 def r_f(t):

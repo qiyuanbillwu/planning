@@ -4,8 +4,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from gradient_descent import optimize_times_gradient_descent, get_coefficients, save_optimization_results, plot_optimization_history
-from utils import evaluate_velocity, plot_velocities, get_velocities, plot_accelerations, plot_jerks, plot_snaps
+from src.gradient_descent import optimize_times_gradient_descent, get_coefficients, save_optimization_results, plot_optimization_history
+from src.utils import evaluate_velocity, plot_velocities, get_velocities, plot_accelerations, plot_jerks, plot_snaps
 import json
 import time
 

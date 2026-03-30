@@ -1,5 +1,7 @@
-from utils import a, Q_snap
-import constants
+# minimum snap trajectory with 2 segments
+
+from src.utils import a, Q_snap
+import src.constants as constants
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -195,8 +197,8 @@ learning_rate = 1e-6
 max_iterations = 2000
 tolerance = 1e-4
 
-T1_current = 1.6
-T2_current = 1.6
+T1_current = 2
+T2_current = 2
 T1_history = [T1_current]
 T2_history = [T2_current]
 cost_history = []

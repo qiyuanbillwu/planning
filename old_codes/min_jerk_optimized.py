@@ -1,5 +1,5 @@
-from utils import a5, Q_jerk
-import constants
+from src.utils import a5, Q_jerk
+import src.constants as constants
 import numpy as np
 import matplotlib.pyplot as plt
 import json

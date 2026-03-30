@@ -1,13 +1,13 @@
 from webbrowser import get
-from utils import a, a5, Q_snap, Q_jerk, save_coeffs, save_time
+from src.utils import a, a5, Q_snap, Q_jerk, save_coeffs, save_time
 from scipy.linalg import solve_banded
-from linear_algebra import *
-import constants
+from src.linear_algebra import *
+import src.constants as constants
 import numpy as np
 import matplotlib.pyplot as plt
 import json
 import time
-from waypoints import waypoint_list
+from data.waypoints import waypoint_list
 
 # Extract 8 waypoints from waypoints.txt
 # r0 = np.array([18.2908, -12.9164, 0.5])

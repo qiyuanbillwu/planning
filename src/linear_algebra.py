@@ -2,7 +2,7 @@
 
 from scipy.linalg import solve_banded
 import numpy as np
-from utils import a, Q_snap, beta
+from src.utils import a, Q_snap, beta
 
 def to_banded(M, l, u):
         """

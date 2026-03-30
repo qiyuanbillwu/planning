@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import json
-from utils import get_positions, compute_forces
+from src.utils import get_positions, compute_forces
 
 # Load optimized coefficients and time parameters
 with open("data/min_snap_coeffs.json", "r") as f:

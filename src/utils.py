@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from constants import J, l, d, m, g
+from src.constants import J, l, d, m, g
 
 def a(n, t):
     """
