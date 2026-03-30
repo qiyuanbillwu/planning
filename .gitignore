@@ -20,5 +20,8 @@ Thumbs.db
 
 # Ignore old codes and data
 old_codes/
-data/
 point_cloud/
+
+data/*
+!data/
+!data/waypoints.py
