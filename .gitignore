@@ -20,7 +20,7 @@ Thumbs.db
 
 # Ignore old codes and data
 old_codes/
-point_cloud/
+point cloud/
 
 data/*
 !data/
