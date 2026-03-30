@@ -17,3 +17,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Ignore old codes and data
+old_codes/
+data/
