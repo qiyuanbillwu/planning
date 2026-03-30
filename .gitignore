@@ -25,3 +25,5 @@ point cloud/
 data/*
 !data/
 !data/waypoints.py
+
+.pdf
